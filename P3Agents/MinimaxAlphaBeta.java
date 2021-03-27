@@ -74,7 +74,7 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public GameStateChild alphaBetaSearch(GameStateChild node, int depth, double alpha, double beta)
     {
-        if(depth == 0 || node.state.isTerminal() == 0) return node.state.getUtility();
+        if(depth == 0 || node.state.isTerminated() == true) return node;
         double currentAlpha = alpha, currentBeta = beta;
         List<GameStateChild> orderedChildren = orderChildrenWithHeuristics(node.state.getChildren());
         GameStateChild bestMove = orderedChildren.get(0);
@@ -89,7 +89,7 @@ public class MinimaxAlphaBeta extends Agent {
         return bestMove;
     }
     public double alphaBetaSearchMax(GameStateChild node, int depth, double alpha, double beta){
-        if(depth == 0 || node.state.isTerminal() == 0) return node.state.getUtility();
+        if(depth == 0 || node.state.isTerminated() == true) return node.state.getUtility();
         double currentAlpha = alpha, currentBeta = beta;
         double maxUlt = Double.NEGATIVE_INFINITY;
         List<GameStateChild> orderedChildren = orderChildrenWithHeuristics(node.state.getChildren());
@@ -104,7 +104,7 @@ public class MinimaxAlphaBeta extends Agent {
         return maxUlt;
     }
     public double alphaBetaSearchMin(GameStateChild node, int depth, double alpha, double beta){
-        if(depth == 0 || node.state.isTerminal() == 0) return node.state.getUtility();
+        if(depth == 0 || node.state.isTerminated() == true) return node.state.getUtility();
         double currentAlpha = alpha, currentBeta = beta;
         double minUlt = Double.POSITIVE_INFINITY;
         List<GameStateChild> orderedChildren = orderChildrenWithHeuristics(node.state.getChildren());

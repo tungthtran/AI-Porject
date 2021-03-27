@@ -7,6 +7,7 @@ import edu.cwru.sepia.action.TargetedAction;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.util.Direction;
+import edu.cwru.sepia.environment.model.state.ResourceNode;
 
 import java.util.*;
 /**
@@ -37,7 +38,7 @@ public class GameState {
 
             range = unitView.getTemplateView().getRange();
             baseHP = unitView.getTemplateView().getBaseHealth();
-            damage = unitView.getTemplateView().getdamageack();
+            damage = unitView.getTemplateView().getBasicAttack();
         }
         
         // move by xOffset and yOffset
@@ -67,14 +68,37 @@ public class GameState {
             return Objects.hash(ID);
         }
     }
-     
+    class MapLocation {
+       int x;
+       int y;
+       public MapLocation(int x, int y) {
+         this.x = x;
+         this.y = y; 
+       }
+       
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MapLocation location = (MapLocation) o;
+            return this.x == location.x && this.y == location.y ;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y);
+        }
+     }  
     private State.StateView state;
     private List<SimUnit> player0Units;
     private List<SimUnit> player1Units;
     private int xMax;
     private int yMax;
+    // is true if this is player 0 turn, false otherwise
+    private boolean player0Turn;
     // a map to keep track of the sim units
     private Map<Integer, SimUnit> UnitIdMap = new HashMap<>();
+    private Set<MapLocation> resourcesLocation = new HashSet<>();
 
     /**
      * You will implement this constructor. It will
@@ -105,20 +129,20 @@ public class GameState {
      * SEPIA stores information about unit types inside TemplateView objects.
      * For a given unit type you will need to find statistics from its Template View.
      * unitView.getTemplateView().getRange(): This gives you the attack range
-     * unitView.getTemplateView().getdamageack(): The amount of damage this unit type deals
+     * unitView.getTemplateView().getBasicAttack(): The amount of damage this unit type deals
      * unitView.getTemplateView().getBaseHealth(): The initial amount of health of this unit type
      *
      * @param state Current state of the episode
      */
     public GameState(State.StateView state) {
         this.state = state;
-
-        state.getUnits(0).forEach((unit) -> {
-            player0Units.add(new SimUnit(unit));
+        player0Turn = true;
+        state.getUnitIds(0).forEach((unit) -> {
+            player0Units.add(new SimUnit(state.getUnit(unit.intValue())));
         });
 
-        state.getUnits(1).forEach((unit) -> {
-            player1Units.add(new SimUnit(unit));
+        state.getUnitIds(1).forEach((unit) -> {
+            player1Units.add(new SimUnit(state.getUnit(unit.intValue())));
         });
 
         this.xMax = state.getXExtent();
@@ -131,6 +155,11 @@ public class GameState {
         state.getUnits(1).forEach((unit) -> {
             UnitIdMap.put(unit.getID(), new SimUnit(unit));
         });
+        List<ResourceNode.ResourceView> resources = state.getAllResourceNodes();
+        for(ResourceNode.ResourceView resource: resources) {
+            MapLocation eachResource = new MapLocation(resource.getXPosition(), resource.getYPosition());
+            resourcesLocation.add(eachResource);
+        }
     }
     
       /**
@@ -138,13 +167,15 @@ public class GameState {
      * @param gameState Current state of the episode
      * @param action Action taken
      */ 
-    public GameState(GameState gameState, Action action) {
+    public GameState(GameState gameState, Action action, boolean changeTurn) {
         this.state = gameState.state;
-        this.xMax = gameState.getXExtent();
-        this.yMax = gameState.getYExtent();
-        
+        this.xMax = gameState.state.getXExtent();
+        this.yMax = gameState.state.getYExtent();
+        this.resourcesLocation = gameState.resourcesLocation;
+        if (changeTurn)player0Turn = !gameState.player0Turn;
+        else player0Turn = gameState.player0Turn;
         ActionType type = action.getType();
-        int unitID = action.getUnitID();
+        int unitID = action.getUnitId();
         // the simulate unit to apply the action
         SimUnit unit = UnitIdMap.get(unitID);    
                                      
@@ -232,7 +263,9 @@ public class GameState {
     
     private double distanceUtility() {
         double utility = 0.0;
+
         for(SimUnit footman : player0Units) {
+            double distance = 0.0;
             for(SimUnit archer : player1Units) {
                 distance = Math.sqrt(Math.pow(footman.x - archer.x, 2) + Math.pow(footman.y - archer.y, 2));
             }
@@ -242,9 +275,9 @@ public class GameState {
     }
 
     // return true if all the footmen or archers die
-    private boolean isTerminated() {
+    public boolean isTerminated() {
         double totalArchersHealth = 0.0;
-        double totalFootmenHealth 0.0;
+        double totalFootmenHealth = 0.0;
         for(SimUnit archer : player1Units) {
             totalArchersHealth += (double)archer.HP;
         }
@@ -302,46 +335,47 @@ public class GameState {
         int numArchers = player1Units.size();
 
         //get IDs and UnitView of the first Footman and Archer
-        int firstFootmanID = player0Units.get(0);
-        UnitView firstFootmanView = state.getUnit(firstFootmanID);
-        int secondFootmanID;
-        UnitView secondFootmanView;
+        int firstFootmanID = player0Units.get(0).ID;
+        Unit.UnitView firstFootmanView = state.getUnit(firstFootmanID);
+        int secondFootmanID = -1;
+        Unit.UnitView secondFootmanView = null;
         //get IDs and UnitView of the second Footman
         if (player0Units.size() == 2) {
-            secondFootmanID = player0Units.get(1);
+            secondFootmanID = player0Units.get(1).ID;
             secondFootmanView = state.getUnit(secondFootmanID);
         }
 
-        int firstArcherID = player1Units.get(0);
-        UnitView firstArcherView = state.getUnit(firstArcherID);
-        int secondArcherID;
-        UnitView secondArcherView;
+        int firstArcherID = player1Units.get(0).ID;
+        Unit.UnitView firstArcherView = state.getUnit(firstArcherID);
+        int secondArcherID = -1;
+        Unit.UnitView secondArcherView = null;
         if (player1Units.size() == 2) {
-            secondArcherID = player1Units.get(1);
+            secondArcherID = player1Units.get(1).ID;
             secondArcherView = state.getUnit(secondArcherID);
         }
 
         //If it's our turn Footmen, find all possible actions and associated state
-        if (playerNum == 0) {
+        if (player0Turn) {
             //actions and state of the first Footman
-            for (Direction direction1 : Directions.values()) {
+            for (Direction direction1 : Direction.values()) {
                 Action footmanAct1 = footmanAct(direction1, firstFootmanID, firstFootmanView, player1Units);
+                GameState childState1 = null;
                 if (footmanAct1 != null) {
-                    GameState childState1 = new GameState(this, footmanAct1);
                     //if there is only one Footman, create a child and add to list and continue consider other directions
                     if (player0Units.size() <= 1) {
                         actions.put(firstFootmanID, footmanAct1);
+                        childState1 = new GameState(this, footmanAct1, true);
                         childNodes.add(new GameStateChild(actions, childState1));
                         continue;
-                    }
+                    }else childState1 = new GameState(this, footmanAct1, false);
                 }
                 
                 //actions and state of the second Footman if there are two Footmen
-                for (Direction direction2 : Directions.values()) {
+                for (Direction direction2 : Direction.values()) {
                     Map<Integer, Action> actionsBothFootman = new HashMap<Integer, Action>();
                     Action footmanAct2 = footmanAct(direction2, secondFootmanID, secondFootmanView, player1Units);
                     if (footmanAct2 != null) {
-                        GameState childStateBothFootman = new GameState(childState1, footmanAct2);
+                        GameState childStateBothFootman = new GameState(childState1, footmanAct2, true);
                         actionsBothFootman.put(firstFootmanID, footmanAct1);
                         actionsBothFootman.put(secondFootmanID, footmanAct2);
                         childNodes.add(new GameStateChild(actionsBothFootman, childStateBothFootman));
@@ -352,25 +386,26 @@ public class GameState {
 
         //if it's Archer's turn, find all possible actions and associated state
         else {
-            for(Direction direction1 : Directions.values()) {
+            for(Direction direction1 : Direction.values()) {
                 Action archerAct1 = archerAct(direction1, firstArcherID, firstArcherView, player0Units);
+                GameState childState1 = null;
                 if (archerAct1 != null) {
-                    GameState childState1 = new GameState(this, archerAct1);
                     //if there is only one Archer, create a child and add to list and continue consider other direction
                     if (player0Units.size() <= 1) {
                         actions.put(firstArcherID, archerAct1);
+                        childState1 = new GameState(this, archerAct1, true);
                         childNodes.add(new GameStateChild(actions, childState1));
                         continue;
-                    }
+                    }else childState1 = new GameState(this, archerAct1, false);
                 }
 
                 //actions and state of the second Footman if there are two Footmen
-                for (Direction direction2 : Directions.values()) {
+                for (Direction direction2 : Direction.values()) {
                     Map<Integer, Action> actionsBothArchers = new HashMap<Integer, Action>();
                     Action archerAct2 = footmanAct(direction2, secondArcherID, secondArcherView, player0Units);
 
                     if (archerAct2 != null) {
-                        GameState childStateBothFootman = new GameState(childState1, archerAct2);
+                        GameState childStateBothFootman = new GameState(childState1, archerAct2, true);
                         actionsBothArchers.put(firstArcherID, archerAct1);
                         actionsBothArchers.put(secondArcherID, archerAct2);
                         childNodes.add(new GameStateChild(actionsBothArchers, childStateBothFootman));
@@ -381,29 +416,29 @@ public class GameState {
         return childNodes;
     }
 
-    public Action archerAct(Direction direction, int archerID, UnitView archerView, List<int> player0Units) {
+    public Action archerAct(Direction direction, int archerID, Unit.UnitView archerView, List<SimUnit> player0Units) {
         int dirX = direction.xComponent();
         int dirY = direction.yComponent();
         int newarcherX = archerView.getXPosition() + dirX;
         int newarcherY = archerView.getYPosition() + dirY;
-        int firstFootmanID = player0Units.get(0);
-        UnitView firstFootmanView = state.getUnit(firstFootmanID);
-        int secondFootmanID;
-        UnitView secondFootmanView;
+        int firstFootmanID = player0Units.get(0).ID;
+        Unit.UnitView firstFootmanView = state.getUnit(firstFootmanID);
+        int secondFootmanID = -1;
+        Unit.UnitView secondFootmanView = null;
         //get IDs and UnitView of the second Footman
         if (player0Units.size() == 2) {
-            secondFootmanID = player0Units.get(1);
+            secondFootmanID = player0Units.get(1).ID;
             secondFootmanView = state.getUnit(secondFootmanID);
         }
-        if ((dirX == 0 || dirY == 0) && (newarcherX >= 0 && newarcherX <= mapXExtent && newarcherY >=0 && newarcherY <=mapYExtent)
-                    && !resourceLocations.contains(new MapLocation(newarcherX, newarcherY))) {
+        if ((dirX == 0 || dirY == 0) && (newarcherX >= 0 && newarcherX <= xMax && newarcherY >=0 && newarcherY <=yMax)
+                    && !resourcesLocation.contains(new MapLocation(newarcherX, newarcherY))) {
             //if archer is within the range of the first Footman or both Footman, attack the first Footman
-            if(getDistance(firstFootmanView,archerView) <= archerView.getRange()) {
+            if(getDistance(firstFootmanView,archerView) <= archerView.getTemplateView().getRange()) {
                 return Action.createPrimitiveAttack(archerID, firstFootmanID);
             }
 
             //if archer is within the range of the second Footman, attack the second Footman
-            else if (getDistance(secondFootmanView,archerView) <= archerView.getRange()) {
+            else if (getDistance(secondFootmanView,archerView) <= archerView.getTemplateView().getRange()) {
                 return Action.createPrimitiveAttack(archerID, secondFootmanID);
             }
 
@@ -415,23 +450,23 @@ public class GameState {
         return null;
     }
 
-    public Action footmanAct(Direction direction, int footmanID, UnitView footmanView, List<int> player1Units) {
+    public Action footmanAct(Direction direction, int footmanID, Unit.UnitView footmanView, List<SimUnit> player1Units) {
         int dirX = direction.xComponent();
         int dirY = direction.yComponent();
         int newfootmen1X = footmanView.getXPosition() + dirX;
         int newfootmen1Y = footmanView.getYPosition() + dirY;
-        int archerID1 = player1Units.get(0);
-        UnitView archerView1 = state.getUnit(archerID1);
-        int archerID2;
-        UnitView archerView2;
+        int archerID1 = player1Units.get(0).ID;
+        Unit.UnitView archerView1 = state.getUnit(archerID1);
+        int archerID2 = -1;
+        Unit.UnitView archerView2 = null;
         if (player1Units.size() == 2) {
-            archerID2 = player1Units.get(1);
+            archerID2 = player1Units.get(1).ID;
             archerView2 = state.getUnit(archerID2);
         }
 
         //Only consider Footmen move if it's not diagonal, within the boundaries of the map, and dont collide to any obstacles
-        if ((dirX == 0 || dirY == 0) && (newfootmen1X >= 0 && newfootmen1X <= mapXExtent && newfootmen1Y >=0 && newfootmen1Y <=mapYExtent)
-            && !resourceLocations.contains(new MapLocation(newfootmen1X, newfootmen1Y))) {
+        if ((dirX == 0 || dirY == 0) && (newfootmen1X >= 0 && newfootmen1X <= xMax && newfootmen1Y >=0 && newfootmen1Y <=yMax)
+            && !resourcesLocation.contains(new MapLocation(newfootmen1X, newfootmen1Y))) {
             //if adjacent to the first Archer or both Archers, attack the first Archer
             if (isAdjacentTo(footmanView.getXPosition(), footmanView.getYPosition(), archerView1)) {
                 return Action.createPrimitiveAttack(footmanID, archerID1);
@@ -449,16 +484,16 @@ public class GameState {
     }
 
     //get distance between 2 units
-    public int getDistance(UnitView unit1, UnitView unit2) {
-        int distance = 0;
-        int disXsquared = Math.pow(unit2.x - unit1.x, 2);
-        int disYsquared = Math.pow(unit2.y - unit1.y, 2);
+    public double getDistance(Unit.UnitView unit1, Unit.UnitView unit2) {
+        double distance = 0;
+        double disXsquared = Math.pow(unit2.getXPosition() - unit1.getXPosition(), 2);
+        double disYsquared = Math.pow(unit2.getYPosition() - unit1.getYPosition(), 2);
         distance = Math.pow((disXsquared + disYsquared), 1/2);
         return distance;
     }
 
     //check if 2 units 
-    public boolean isAdjacentTo(int footmenX, int footmenY, UnitView unit2) {
+    public boolean isAdjacentTo(int footmenX, int footmenY, Unit.UnitView unit2) {
         return Math.abs(footmenX - unit2.getXPosition()) <= 1 && Math.abs(footmenY - unit2.getYPosition()) <= 1;
     }
 }
