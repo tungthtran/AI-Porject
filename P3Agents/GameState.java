@@ -18,7 +18,8 @@ import java.util.*;
  * but do not delete or change the signatures of the provided methods.
  */
 public class GameState {
-
+ 
+     // an inner class represent a simulate unit
      class SimUnit {
         int ID;
         int range;
@@ -37,6 +38,20 @@ public class GameState {
             range = unitView.getTemplateView().getRange();
             baseHP = unitView.getTemplateView().getBaseHealth();
             damage = unitView.getTemplateView().getBasicAttack();
+        }
+        
+        // move by xOffset and yOffset
+         public void move(int xOffset, int yOffset) {
+            this.x += xOffset;
+            this.y += yOffset;
+        }
+
+        public void attack(SimUnit target){
+            target.loseHPBy(this.damage);
+        }
+
+        public void loseHPBy(int amount) {
+            this.HP -= amount;
         }
 
         @Override
@@ -58,8 +73,9 @@ public class GameState {
     private List<SimUnit> player1Units;
     private int xMax;
     private int yMax;
-    private State.StateView state;
-     
+    // a map to keep track of the sim units
+    private Map<Integer, SimUnit> UnitIdMap = new HashMap<>();
+
     /**
      * You will implement this constructor. It will
      * extract all of the needed state information from the built in
@@ -107,6 +123,75 @@ public class GameState {
 
         this.xMax = state.getXExtent();
         this.yMax = state.getYExtent();
+        
+        state.getUnits(0).forEach((unit) -> {
+            UnitIdMap.put(unit.getID(), new SimUnit(unit));
+        });
+
+        state.getUnits(1).forEach((unit) -> {
+            UnitIdMap.put(unit.getID(), new SimUnit(unit));
+        });
+    }
+    
+      /**
+     * Generate a new game state given the previous game state and the action taken
+     * @param gameState Current state of the episode
+     * @param action Action taken
+     */ 
+    public GameState(GameState gameState, Action action) {
+        this.state = gameState.state;
+        this.xMax = gameState.getXExtent();
+        this.yMax = gameState.getYExtent();
+        
+        ActionType type = action.getType();
+        int unitID = action.getUnitID();
+        // the simulate unit to apply the action
+        SimUnit unit = UnitIdMap.get(unitID);    
+                                     
+        if (type.equals(ActionType.PRIMITIVEATTACK)) {
+          TargetedAction attackAction = (TargetedAction)action;
+          int targetID = attackAction.getTargetId();
+          // the target of the attack
+          SimUnit target = UnitIdMap.get(targetID);  
+          
+          // apply the attack action
+          unit.attack(target);
+          
+          // if the target of the attack is a footman then update 
+//          for (SimUnit footman : playerOUnits) {
+//            if (footmen.ID == targetID) {
+//              play0Units.remove(footman);
+//              play0Units.add(target);
+//            }
+//          }
+//          
+//          // if the target of the attack is an archer then update 
+//          for (SimUnit archer : player1Units) {
+//            if (archer.ID == targetID) {
+//              play1Units.remove(archer);
+//              play1Units.add(target);
+//            }
+//          }                             
+        }
+        
+        else if(type.equals(ActionType.PRIMITIVEMOVE)) {
+          Direction direction = ((DirectedAction)action).getDirection();
+          unit.move(direction.xComponent(), direction.yComponent());
+          // if the moving unit is a footman then update 
+//          for (SimUnit footman : playerOUnits) {
+//            if (footmen.ID == unitID) {
+//              play0Units.remove(footman);
+//              play0Units.add(unit);
+//            }
+//          }
+//          // if the moving unit is an archer then update 
+//          for (SimUnit archer : player1Units) {
+//            if (archer.ID == unitID) {
+//              play1Units.remove(archer);
+//              play1Units.add(unit);
+//            }
+//          }
+        }
     }
 
     /**
@@ -134,21 +219,39 @@ public class GameState {
         return utility;
     }
     
-    
     private double healthUtility() {
-        double health = 0.0;
+        double healthUtility = 0.0;
+        for(SimUnit footman : player0Units) {
+           healthUtility += (double)footman.HP/footman.baseHP;
+        }
         for(SimUnit archer : player1Units) {
-            health -= (double)archer.HP/archer.baseHP;
+           healthUtility -= (double)archer.HP/archer.baseHP;
+        }
+        return healthUtility;
+    }
+    
+    private double distanceUtility() {
+        double utility = 0.0;
+        for(SimUnit footman : player0Units) {
+            for(SimUnit archer : player1Units) {
+                distance = Math.sqrt(Math.pow(footman.x - archer.x, 2) + Math.pow(footman.y - archer.y, 2));
+            }
+            utility -= distance;
+        }
+        return utility;
+    }
+
+    // return true if all the footmen or archers die
+    private boolean isTerminated() {
+        double totalArchersHealth = 0.0;
+        double totalFootmenHealth 0.0;
+        for(SimUnit archer : player1Units) {
+            totalArchersHealth += (double)archer.HP;
         }
         for(SimUnit footman : player0Units) {
-            health += (double)footman.HP/footman.baseHP;
+            totalFootmenHealth += (double)footman.HP;
         }
-        return health;
-    }
-    private double distanceUtility() {}
-
-    private boolean isTerminated() {
-      return player0Units.size() == 0 || player1Units.size() == 0;
+        return totalArchersHealth <= 0.0 || totalFootmenHealth <= 0.0;
     }
     /**
      * You will implement this function.
