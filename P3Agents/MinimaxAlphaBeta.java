@@ -13,6 +13,15 @@ import java.util.Map;
 public class MinimaxAlphaBeta extends Agent {
 
     private final int numPlys;
+    private static final Comparator<GameStateChild> COMPARATOR = (o1, o2) -> {
+        if(o1.state.getUtility() > o2.state.getUtility()){
+            return -1;
+        } else if (o1.state.getUtility() < o2.state.getUtility()){
+            return 1;
+        } else {
+            return 0;
+        }
+    };
 
     public MinimaxAlphaBeta(int playernum, String[] args)
     {
@@ -133,6 +142,6 @@ public class MinimaxAlphaBeta extends Agent {
      */
     public List<GameStateChild> orderChildrenWithHeuristics(List<GameStateChild> children)
     {
-        return children;
+        return children.sort(COMPARATOR);
     }
 }
