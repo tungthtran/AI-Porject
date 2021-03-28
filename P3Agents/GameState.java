@@ -10,6 +10,7 @@ import edu.cwru.sepia.util.Direction;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 
 import java.util.*;
+import java.util.stream.Collectors;
 /**
  * This class stores all of the information the agent
  * needs to know about the state of the game. For example this
@@ -29,7 +30,6 @@ public class GameState {
         int baseHP;
         int HP;
         int damage;
-
         public SimUnit(Unit.UnitView unitView) {
             ID = unitView.getID();
             x = unitView.getXPosition();
@@ -40,17 +40,28 @@ public class GameState {
             baseHP = unitView.getTemplateView().getBaseHealth();
             damage = unitView.getTemplateView().getBasicAttack();
         }
+        // Create a copy of a SimUnit
+        public SimUnit(SimUnit unit) {
+            ID = unit.ID;
+            x = unit.x;
+            y = unit.y;
+            HP = unit.HP;
+            range = unit.range;
+            baseHP = unit.baseHP;
+            damage = unit.damage;
+        }
+
         
         // move by xOffset and yOffset
          public void move(int xOffset, int yOffset) {
             this.x += xOffset;
             this.y += yOffset;
         }
-
+        // perform an attack on target
         public void attack(SimUnit target){
             target.loseHPBy(this.damage);
         }
-
+        // is targeted by an attack and lose some amount of health
         public void loseHPBy(int amount) {
             this.HP -= amount;
         }
@@ -68,6 +79,7 @@ public class GameState {
             return Objects.hash(ID);
         }
     }
+    // A location on a Map
     class MapLocation {
        int x;
        int y;
@@ -98,6 +110,7 @@ public class GameState {
     private boolean player0Turn;
     // a map to keep track of the sim units
     private Map<Integer, SimUnit> UnitIdMap = new HashMap<>();
+    //the locations of the obstacles
     private Set<MapLocation> resourcesLocation = new HashSet<>();
 
     /**
@@ -137,12 +150,12 @@ public class GameState {
     public GameState(State.StateView state) {
         this.state = state;
         player0Turn = true;
-        state.getUnitIds(0).forEach((unit) -> {
-            player0Units.add(new SimUnit(state.getUnit(unit.intValue())));
+        state.getUnits(0).forEach((unit) -> {
+            player0Units.add(new SimUnit(unit));
         });
 
-        state.getUnitIds(1).forEach((unit) -> {
-            player1Units.add(new SimUnit(state.getUnit(unit.intValue())));
+        state.getUnits(1).forEach((unit) -> {
+            player1Units.add(new SimUnit(unit));
         });
 
         this.xMax = state.getXExtent();
@@ -171,7 +184,15 @@ public class GameState {
         this.state = gameState.state;
         this.xMax = gameState.state.getXExtent();
         this.yMax = gameState.state.getYExtent();
-        this.resourcesLocation = gameState.resourcesLocation;
+        for (SimUnit footman : gameState.getPlayer0Units()) {
+            this.player0Units.add(footman);
+        }
+        for (SimUnit archer : gameState.getPlayer1Units()) {
+            this.player1Units.add(archer);
+        }
+        for (MapLocation location : gameState.getResourcesLocation()) {
+            this.resourcesLocation.add(location);
+        }
         if (changeTurn)player0Turn = !gameState.player0Turn;
         else player0Turn = gameState.player0Turn;
         ActionType type = action.getType();
@@ -223,6 +244,33 @@ public class GameState {
 //            }
 //          }
         }
+        // Remove units that are death from the units lists
+        this.player0Units = player0Units.stream().filter(footman -> footman.HP > 0).collect(Collectors.toList());
+        this.player1Units = player1Units.stream().filter(archer -> archer.HP > 0).collect(Collectors.toList());
+    }
+
+    public List<MapLocation> getResourcesLocation() {
+      List<MapLocation> locationList = new LinkedList<>();
+      for (MapLocation location : this.resourcesLocation) {
+        locationList.add(location);
+      }
+      return locationList;
+    }
+    public List<SimUnit> getPlayer0Units() {
+      List<SimUnit> footmen = new LinkedList<>();
+      for (SimUnit footman : this.player0Units) {
+        SimUnit footmanCopy = new SimUnit(footman);
+        footmen.add(footmanCopy);
+      }
+      return footmen;
+    }    
+    public List<SimUnit> getPlayer1Units() {
+      List<SimUnit> archers = new LinkedList<>();
+      for (SimUnit archer : this.player1Units) {
+        SimUnit archerCopy = new SimUnit(archer);
+        archers.add(archerCopy);
+      }
+      return archers;
     }
 
     /**
@@ -240,7 +288,7 @@ public class GameState {
      * able to do less plys in a turn.
      *
      * Add a good comment about what is in your utility and why you chose those features.
-     *
+     * We use a combination of percentage health of the units and the distance between the footmen and the archers 
      * @return The weighted linear combination of the features
      */
     public double getUtility() {
@@ -249,7 +297,9 @@ public class GameState {
         utility += 1 * distanceUtility();
         return utility;
     }
-    
+    /**
+     * This function will calculate the utility based on the percentage health of the units
+     */
     private double healthUtility() {
         double healthUtility = 0.0;
         for(SimUnit footman : player0Units) {
@@ -260,7 +310,9 @@ public class GameState {
         }
         return healthUtility;
     }
-    
+    /**
+     * This function will calculate the utility based on the distance between the footmen and the archers
+     */
     private double distanceUtility() {
         double utility = 0.0;
 
@@ -324,6 +376,7 @@ public class GameState {
      * 
      * @return All possible actions and their associated resulting game state
      */
+    
     public List<GameStateChild> getChildren() {
         //check if one player's all units dead -> end game
         if (player0Units.size() <= 0 || player1Units.size() <= 0) {
