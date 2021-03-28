@@ -97,6 +97,14 @@ public class MinimaxAlphaBeta extends Agent {
         }
         return bestMove;
     }
+    /**
+     * This function will perform an alphaBetaSearch at the max node and return the backed up utility of the node
+     * @param node The action and state to search from
+     * @param depth The remaining number of plys under this node
+     * @param alpha The current best value for the maximizing node from this node to the root
+     * @param beta The current best value for the minimizing node from this node to the root
+     * @return The backed up utility of the node
+     */
     public double alphaBetaSearchMax(GameStateChild node, int depth, double alpha, double beta){
         if(depth == 0 || node.state.isTerminated() == true) return node.state.getUtility();
         double currentAlpha = alpha, currentBeta = beta;
@@ -112,6 +120,14 @@ public class MinimaxAlphaBeta extends Agent {
         }
         return maxUlt;
     }
+    /**
+     * This function will perform an alphaBetaSearch at the min node and return the backed up utility of the node
+     * @param node The action and state to search from
+     * @param depth The remaining number of plys under this node
+     * @param alpha The current best value for the maximizing node from this node to the root
+     * @param beta The current best value for the minimizing node from this node to the root
+     * @return The backed up utility of the node
+     */
     public double alphaBetaSearchMin(GameStateChild node, int depth, double alpha, double beta){
         if(depth == 0 || node.state.isTerminated() == true) return node.state.getUtility();
         double currentAlpha = alpha, currentBeta = beta;
