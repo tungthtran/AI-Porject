@@ -92,7 +92,28 @@ public class PlannerAgent extends Agent {
      */
     private Stack<StripsAction> AstarSearch(GameState startState) {
         // TODO: Implement me!
-        return null;
+        PriorityQueue<GameState> openList = new PriorityQueue<>();
+        Set<GameState> closedList = new HashSet<>();
+        GameState current = null;
+        // Add the starting state into the openList
+        openList.add(startState);
+        List<GameState> neighbors = new List<>();
+        while (!openList.isEmpty()){
+            //choose the state with the lowest estimated cost
+            current = openList.poll();
+            //check if the chosen state is a goal;
+            if(current.isGoal())break;
+            //check if the current state is in the closed list
+            if(closedList.contains(current))continue;
+            //generate the lists of neighbors
+            neighbors = current.generateChildren();
+            //expand to the neighbor state
+            for(GameState neighbor : neighbors){
+                openList.add(neighbor);
+            }
+
+        }
+        return current.getPlan();
     }
 
     /**
