@@ -79,7 +79,7 @@ public class GameState implements Comparable<GameState> {
             }
             townhall = townhalls.get(0);
             double minDistance = Double.POSITIVE_INFINITY;
-            for (SimResource goldMine : state.golds){
+            for (SimResource goldMine : state.getGolds()){
                 if (goldMine.getPosition().chebyshevDistance(townhall.getPosition()) < minDistance){
                     closestGoldMine = goldMine;
                     minDistance = goldMine.getPosition().chebyshevDistance(townhall.getPosition());
@@ -98,6 +98,50 @@ public class GameState implements Comparable<GameState> {
                 }
             }
             result.actionsTillState.push(this);
+            result.setCost(this.cost+current.getCost());
+            return result;
+        }
+        public double getCost(){
+            return cost;
+        }
+    }
+    class MoveUnitFromBaseToWood implements StripsAction {
+        private int unitID;
+        private SimUnit performingUnit;
+        private SimUnit townhall;
+        private double cost;
+        private SimResource closestWood;
+        
+        public MoveUnitFromBaseToWood(int unitID, GameState state){
+            this.unitID = unitID;
+            for(SimUnit unit : state.peasants){
+                if(unitID == unit.getID()){
+                    performingUnit = new SimUnit(unit);
+                    break;
+                }
+            }
+            townhall = townhalls.get(0);
+            double minDistance = Double.POSITIVE_INFINITY;
+            for (SimResource wood : state.getWoods()){
+                if (wood.getPosition().chebyshevDistance(townhall.getPosition()) < minDistance){
+                    closestWood = wood;
+                    minDistance = wood.getPosition().chebyshevDistance(townhall.getPosition());
+                }
+            }
+            cost = minDistance;
+        }
+        public boolean preconditionsMet(){
+            return performingUnit.getPosition().equals(townhalls.get(0).getPosition());
+        }
+        public GameState apply(GameState current){
+            GameState result = new GameState(current);
+            for (SimUnit peasant : result.peasants){
+                if(peasant.getID() == unitID){
+                    peasant.setPosition(closestWood.getPosition());
+                }
+            }
+            result.actionsTillState.push(this);
+            result.setCost(this.cost+current.getCost());
             return result;
         }
         public double getCost(){
