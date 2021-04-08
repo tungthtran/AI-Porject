@@ -56,8 +56,9 @@ public class GameState implements Comparable<GameState> {
     private List<SimUnit> peasants = new ArrayList<>();
     private List<SimResource> woods = new ArrayList<>();
     private List<SimResource> golds = new ArrayList<>();
-    public Map<Position, SimResource> resourcesPositions = new HashMap<>();
+    private Map<Position, SimResource> resourcesPositions = new HashMap<>();
     private double cost;
+    private Stack<StripsAction> actionsTillState;
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -102,6 +103,24 @@ public class GameState implements Comparable<GameState> {
         this.woodAmount = 0;
     }
 
+    public GameState(GameState gameState, Stack<StripsAction> actionsTillState) {
+        this.state = gameState.state;
+        this.buildPeasants = gameState.buildPeasants;
+        this.playernum = gameState.playernum;
+        this.requiredGold = gameState.requiredGold;
+        this.requiredWood = gameState.requiredWood;
+        this.xExtent = gameState.xExtent;
+        this.yExtent = gameState.yExtent;
+        this.townhalls = gameState.townhalls;
+        this.peasants = gameState.peasants;
+        this.woods = gameState.woods;
+        this.golds = gameState.golds;
+        this.cost = gameState.cost;
+        this.goldAmount = gameState.goldAmount;
+        this.woodAmount = gameState.woodAmount;
+        Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)actionsTillState.clone();
+        this.actionsTillState = cloneActionsTillState;
+    }
     /**
      * Unlike in the first A* assignment there are many possible goal states. As long as the wood and gold requirements
      * are met the peasants can be at any location and the capacities of the resource locations can be anything. Use
