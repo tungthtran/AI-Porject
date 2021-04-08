@@ -58,7 +58,48 @@ public class GameState implements Comparable<GameState> {
     private List<SimResource> golds = new ArrayList<>();
     private Map<Position, SimResource> resourcesPositions = new HashMap<>();
     private double cost;
-    private Stack<StripsAction> actionsTillState;
+    public Stack<StripsAction> actionsTillState;
+    public class moveUnitFromBaseToMine implement StripsAction{
+        private int unitID;
+        private SimUnit performingUnit;
+        private SimUnit townhall;
+        private double cost;
+        private SimResource closestGoldMine;
+        public moveUnitFromBaseToMine(int unitID, GameState state){
+            this.unitID = unitID
+            for(simUnit unit:state.peasants){
+                if(unitID == unit.getID){
+                    performingUnit = new SimUnit(unit);
+                    break;
+                }
+            }
+            townhall = townhalls.get(0);
+            int minDistance = Double.POSITIVE_INFINITY;
+            for (SimResource goldMine : state.golds){
+                if (goldMine.getPosition().chebyshevDistance(townhall.getPosition)<minDistance){
+                    closestGoldMine = goldMine;
+                    minDistance = goldMine.getPosition().chebyshevDistance(townhall.getPosition);
+                }
+            }
+            cost = minDistance;
+        }
+        public boolean preconditionsMet(){
+            return performingUnit.getPosition() == townhall.get(0).getPosition();
+        }
+        public GameState apply(GameState current){
+            GameState result = new GameState(current);
+            (for SimUnit peasant : result.peasants){
+                if(peasant.getID == unitID){
+                    peasant.setPosition(closestGoldMine.getPosition());
+                }
+            }
+            result.actionsTillState.push(this);
+            return result;
+        }
+        public double getCost(){
+            return cost;
+        }
+    }
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -103,7 +144,7 @@ public class GameState implements Comparable<GameState> {
         this.woodAmount = 0;
     }
 
-    public GameState(GameState gameState, Stack<StripsAction> actionsTillState) {
+    public GameState(GameState gameState) {
         this.state = gameState.state;
         this.buildPeasants = gameState.buildPeasants;
         this.playernum = gameState.playernum;
@@ -118,7 +159,7 @@ public class GameState implements Comparable<GameState> {
         this.cost = gameState.cost;
         this.goldAmount = gameState.goldAmount;
         this.woodAmount = gameState.woodAmount;
-        Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)actionsTillState.clone();
+        Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)gameState.actionsTillState.clone();
         this.actionsTillState = cloneActionsTillState;
     }
     /**

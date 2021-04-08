@@ -37,4 +37,5 @@ public interface StripsAction {
      * @return State resulting from successful action appliction.
      */
     public GameState apply(GameState state);
+    public double getCost();
 }
