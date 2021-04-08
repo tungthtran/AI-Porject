@@ -4,6 +4,8 @@ import edu.cwru.sepia.environment.model.state.State;
 
 import java.util.*;
 
+import actions.StripsAction;
+
 /**
  * This class is used to represent the state of the game after applying one of the avaiable actions. It will also
  * track the A* specific information such as the parent pointer and the cost and heuristic function. Remember that
@@ -59,37 +61,39 @@ public class GameState implements Comparable<GameState> {
     private Map<Position, SimResource> resourcesPositions = new HashMap<>();
     private double cost;
     public Stack<StripsAction> actionsTillState;
-    public class moveUnitFromBaseToMine implement StripsAction{
+
+    class MoveUnitFromBaseToMine implements StripsAction {
         private int unitID;
         private SimUnit performingUnit;
         private SimUnit townhall;
         private double cost;
         private SimResource closestGoldMine;
-        public moveUnitFromBaseToMine(int unitID, GameState state){
-            this.unitID = unitID
-            for(simUnit unit:state.peasants){
-                if(unitID == unit.getID){
+        
+        public MoveUnitFromBaseToMine(int unitID, GameState state){
+            this.unitID = unitID;
+            for(SimUnit unit : state.peasants){
+                if(unitID == unit.getID()){
                     performingUnit = new SimUnit(unit);
                     break;
                 }
             }
             townhall = townhalls.get(0);
-            int minDistance = Double.POSITIVE_INFINITY;
+            double minDistance = Double.POSITIVE_INFINITY;
             for (SimResource goldMine : state.golds){
-                if (goldMine.getPosition().chebyshevDistance(townhall.getPosition)<minDistance){
+                if (goldMine.getPosition().chebyshevDistance(townhall.getPosition()) < minDistance){
                     closestGoldMine = goldMine;
-                    minDistance = goldMine.getPosition().chebyshevDistance(townhall.getPosition);
+                    minDistance = goldMine.getPosition().chebyshevDistance(townhall.getPosition());
                 }
             }
             cost = minDistance;
         }
         public boolean preconditionsMet(){
-            return performingUnit.getPosition() == townhall.get(0).getPosition();
+            return performingUnit.getPosition().equals(townhalls.get(0).getPosition());
         }
         public GameState apply(GameState current){
             GameState result = new GameState(current);
-            (for SimUnit peasant : result.peasants){
-                if(peasant.getID == unitID){
+            for (SimUnit peasant : result.peasants){
+                if(peasant.getID() == unitID){
                     peasant.setPosition(closestGoldMine.getPosition());
                 }
             }
