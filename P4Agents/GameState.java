@@ -262,7 +262,7 @@ public class GameState implements Comparable<GameState> {
             List<SimResource> woods = new ArrayList<>(newGameState.getWoods());
             SimResource newTree = new SimResource(tree);
             
-            // take 100 golds from the mine
+            // take 100 wood from the tree
             newTree.getCollectedFrom();
             woods.remove(tree);
             // if the gold mine still has gold left
@@ -372,7 +372,22 @@ public class GameState implements Comparable<GameState> {
      */
     public List<GameState> generateChildren() {
         // TODO: Implement me!
-        return null;
+        List<GameState> children = new ArrayList<>();
+        for(SimUnit peasant : getPeasants()) {
+            for(SimResource wood : woods) {
+                StripsAction harvestWood = new HarvestWood(peasant, wood);
+                if(harvestWood.preconditionsMet(this)) {
+                    children.add(harvestWood.apply(this));
+                }
+            }
+            for(SimResource gold : golds) {
+                StripsAction harvestGold = new HarvestGold(peasant, gold);
+                if(harvestGold.preconditionsMet(this)) {
+                    children.add(harvestGold.apply(this));
+                }
+            }
+        }
+        return children;
     }
 
     /**
@@ -430,7 +445,18 @@ public class GameState implements Comparable<GameState> {
     @Override
     public boolean equals(Object o) {
         // TODO: Implement me!
-        return false;
+        if(o instanceof GameState) {
+            GameState state = (GameState)o;
+            return this.getPeasants().equals(state.getPeasants())
+                    && this.getGoldAmount() == state.getGoldAmount()
+                    && this.getWoodAmount() == state.getWoodAmount()
+                    && this.getRequiredGold() == state.getRequiredGold()
+                    && this.getRequiredWood() == state.getRequiredWood()
+                    && this.getWoods().size() == state.getWoods().size()
+                    && this.getGolds().size() == state.getGolds().size();
+        }
+        else
+            return false;
     }
 
     /**
@@ -442,7 +468,7 @@ public class GameState implements Comparable<GameState> {
     @Override
     public int hashCode() {
         // TODO: Implement me!
-        return 0;
+        return Objects.hash(goldAmount, woodAmount, requiredGold, requiredWood, woods.size(), golds.size());
     }
 
 
