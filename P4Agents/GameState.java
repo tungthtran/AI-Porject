@@ -88,7 +88,7 @@ public class GameState implements Comparable<GameState> {
             cost = minDistance;
         }
         public boolean preconditionsMet(){
-            return performingUnit.getPosition().equals(townhalls.get(0).getPosition());
+            return performingUnit.getPosition().equals(townhall.getPosition());
         }
         public GameState apply(GameState current){
             GameState result = new GameState(current);
@@ -131,13 +131,48 @@ public class GameState implements Comparable<GameState> {
             cost = minDistance;
         }
         public boolean preconditionsMet(){
-            return performingUnit.getPosition().equals(townhalls.get(0).getPosition());
+            return performingUnit.getPosition().equals(townhall.getPosition());
         }
         public GameState apply(GameState current){
             GameState result = new GameState(current);
             for (SimUnit peasant : result.peasants){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestWood.getPosition());
+                }
+            }
+            result.actionsTillState.push(this);
+            result.setCost(this.cost+current.getCost());
+            return result;
+        }
+        public double getCost(){
+            return cost;
+        }
+    }
+    class MoveUnitToBase implements StripsAction {
+        private int unitID;
+        private SimUnit performingUnit;
+        private SimUnit townhall;
+        private double cost;
+        
+        public MoveUnitFromWoodToBase(int unitID, GameState state){
+            this.unitID = unitID;
+            for(SimUnit unit : state.peasants){
+                if(unitID == unit.getID()){
+                    performingUnit = new SimUnit(unit);
+                    break;
+                }
+            }
+            townhall = townhalls.get(0);
+            cost = performingUnit.getPosition().chebyshevDistance(townhall.getPosition());
+        }
+        public boolean preconditionsMet(){
+            return !performingUnit.getPosition().equals(townhall.getPosition());
+        }
+        public GameState apply(GameState current){
+            GameState result = new GameState(current);
+            for (SimUnit peasant : result.peasants){
+                if(peasant.getID() == unitID){
+                    peasant.setPosition(townhall.getPosition());
                 }
             }
             result.actionsTillState.push(this);
