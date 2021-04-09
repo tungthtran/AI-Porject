@@ -439,6 +439,18 @@ public class GameState implements Comparable<GameState> {
         // TODO: Implement me!
         List<GameState> children = new ArrayList<>();
         for(SimUnit peasant : getPeasants()) {
+            StripsAction moveToWood = new MoveUnitFromBaseToWood(peasant.getID(), this);
+            if (moveToWood.preconditionsMet(this)){
+                children.add(moveToWood.apply(this));
+            }
+            StripsAction moveToMine = new MoveUnitFromBaseToMine(peasant.getID(), this);
+            if (moveToMine.preconditionsMet(this)){
+                children.add(moveToMine.apply(this));
+            }
+            StripsAction moveToBase = new MoveUnitToBase(peasant.getID(), this);
+            if(moveToBase.preconditionsMet(this)){
+                children.add(moveToBase.apply(this));
+            }
             for(SimResource wood : woods) {
                 StripsAction harvestWood = new HarvestWood(peasant, wood);
                 if(harvestWood.preconditionsMet(this)) {
