@@ -1,11 +1,13 @@
+package edu.cwru.sepia.agent.planner;
 import edu.cwru.sepia.agent.planner.actions.*;
 import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
 import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 
+
 import java.util.*;
 
-import actions.StripsAction;
+
 
 /**
  * This class is used to represent the state of the game after applying one of the avaiable actions. It will also
@@ -58,8 +60,8 @@ public class GameState implements Comparable<GameState> {
     private Stack<StripsAction> actionsTillState;
 
     class MoveUnitFromBaseToMine implements StripsAction {
-        private int unitID;
-        private SimUnit performingUnit;
+        private int unitID = peasants.get(0).getID();
+        private SimUnit performingUnit = peasants.get(0);
         private SimUnit townhall;
         private double cost;
         private SimResource closestGoldMine;
@@ -118,8 +120,8 @@ public class GameState implements Comparable<GameState> {
 
     }
     class MoveUnitFromBaseToWood implements StripsAction {
-        private int unitID;
-        private SimUnit performingUnit;
+        private int unitID = peasants.get(0).getID();
+        private SimUnit performingUnit = peasants.get(0);
         private SimUnit townhall;
         private double cost;
         private SimResource closestWood;
@@ -143,7 +145,7 @@ public class GameState implements Comparable<GameState> {
             cost = minDistance - 1;
         }
         public boolean preconditionsMet(GameState state){
-            return performingUnit.getPosition().isAdjacent(townhall.getPosition());
+            return !(performingUnit == null) && performingUnit.getPosition().isAdjacent(townhall.getPosition());
         }
         public GameState apply(GameState current){
             GameState result = new GameState(current);
@@ -174,8 +176,8 @@ public class GameState implements Comparable<GameState> {
         }
     }
     class MoveUnitToBase implements StripsAction {
-        private int unitID;
-        private SimUnit performingUnit;
+        private int unitID = peasants.get(0).getID();
+        private SimUnit performingUnit = peasants.get(0);
         private SimUnit townhall;
         private double cost;
         
@@ -359,10 +361,10 @@ public class GameState implements Comparable<GameState> {
 
             //move cargo from peasant to townhall
             newPeasant.setCargoAmount(0);
-            if(newPeasant.getCargoType().equals(GOLD_MINE)){
+            if(newPeasant.getCargoType().equals(ResourceType.GOLD)){
                 newGameState.setGoldAmount(newGameState.getGoldAmount() + 100);
             }
-            else if(newPeasant.getCargoType().equals(WOOD)){
+            else if(newPeasant.getCargoType().equals(ResourceType.WOOD)){
                 newGameState.setWoodAmount(newGameState.getWoodAmount() + 100);
             }
 
@@ -434,6 +436,7 @@ public class GameState implements Comparable<GameState> {
         this.cost = 0.0;
         this.goldAmount = 0;
         this.woodAmount = 0;
+        this.actionsTillState = new Stack<>();
     }
 
     public GameState(GameState gameState) {
@@ -452,6 +455,7 @@ public class GameState implements Comparable<GameState> {
         this.goldAmount = gameState.goldAmount;
         this.woodAmount = gameState.woodAmount;
         Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)gameState.getActionsTillState().clone();
+        //(Stack<StripsAction>)gameState.getActionsTillState().clone();
         this.actionsTillState = cloneActionsTillState;
     }
     /**
@@ -476,6 +480,18 @@ public class GameState implements Comparable<GameState> {
         // TODO: Implement me!
         List<GameState> children = new ArrayList<>();
         for(SimUnit peasant : getPeasants()) {
+            StripsAction moveToWood = new MoveUnitFromBaseToWood(peasant.getID(), this);
+            if (moveToWood.preconditionsMet(this)){
+                children.add(moveToWood.apply(this));
+            }
+            StripsAction moveToMine = new MoveUnitFromBaseToMine(peasant.getID(), this);
+            if (moveToMine.preconditionsMet(this)){
+                children.add(moveToMine.apply(this));
+            }
+            StripsAction moveToBase = new MoveUnitToBase(peasant.getID(), this);
+            if(moveToBase.preconditionsMet(this)){
+                children.add(moveToBase.apply(this));
+            }
             for(SimResource wood : woods) {
                 StripsAction harvestWood = new HarvestWood(peasant, wood);
                 if(harvestWood.preconditionsMet(this)) {
@@ -508,9 +524,9 @@ public class GameState implements Comparable<GameState> {
      */
     public double heuristic() {
         // TODO: Implement me!
-        Position townhall = townhalls.get(0).getPosition()
+        Position townhall = townhalls.get(0).getPosition();
         int distanceToClosestGoldMine = golds.get(0).getPosition().chebyshevDistance(townhall);
-        int distanceToclosestWood = woods.get(0).getPosition().chebyshevDistance(townhall);
+        int distanceToClosestWood = woods.get(0).getPosition().chebyshevDistance(townhall);
         for (SimResource mine : golds){
             distanceToClosestGoldMine = Math.max(mine.getPosition().chebyshevDistance(townhall),distanceToClosestGoldMine);
         }
