@@ -108,6 +108,14 @@ public class GameState implements Comparable<GameState> {
             return cost;
         }
 
+        public int getUnitId() {
+            return unitID;
+        }
+
+        public String getType() {
+            return "MoveToGold";
+        }
+
     }
     class MoveUnitFromBaseToWood implements StripsAction {
         private int unitID;
@@ -153,8 +161,16 @@ public class GameState implements Comparable<GameState> {
             result.setCost(this.cost+current.getCost());
             return result;
         }
+
         public double getCost(){
             return cost;
+        }
+
+        public int getUnitId() {
+            return unitID;
+        }
+        public String getType() {
+            return "MoveToWood";
         }
     }
     class MoveUnitToBase implements StripsAction {
@@ -198,10 +214,13 @@ public class GameState implements Comparable<GameState> {
         public double getCost(){
             return cost;
         }
+        public int getUnitId() {
+            return unitID;
+        }
     }
 
     class HarvestGold implements StripsAction{
-
+        private int unitID;
         private SimUnit performingUnit;
         private SimResource gold;
         private double cost = 1;
@@ -250,10 +269,14 @@ public class GameState implements Comparable<GameState> {
         public double getCost() {
             return cost;
         }
+
+        public String getType() {
+            return "HarvestGold";
+        }
     }
 
     public class HarvestWood implements StripsAction{
-
+        private int unitID;
         private SimUnit performingUnit;
         private SimResource tree;
         private double cost = 1;
@@ -302,9 +325,16 @@ public class GameState implements Comparable<GameState> {
         public double getCost() {
             return cost;
         }
+        public int getUnitId() {
+            return unitID;
+        }
+        public String getType() {
+            return "HarvestWood";
+        }
     }
 
     class Deposit implements StripsAction {
+        private int unitID;
         private SimUnit performingUnit;
         private SimUnit townhall;
         private double cost = 1;
@@ -351,6 +381,13 @@ public class GameState implements Comparable<GameState> {
         @Override
         public double getCost() {
             return cost;
+        }
+
+        public int getUnitId() {
+            return unitID;
+        }
+        public String getType() {
+            return "Deposit";
         }
     }
 
