@@ -304,12 +304,12 @@ public class GameState implements Comparable<GameState> {
         }
     }
 
-    class DepositGold implements StripsAction {
+    class Deposit implements StripsAction {
         private SimUnit performingUnit;
         private SimUnit townhall;
         private double cost = 1;
 
-        public DepositGold(SimUnit performingUnit, SimUnit townhall) {
+        public Deposit(SimUnit performingUnit, SimUnit townhall) {
             this.performingUnit = performingUnit;
             this.townhall = townhall;
         }
@@ -332,51 +332,7 @@ public class GameState implements Comparable<GameState> {
             if(newPeasant.getCargoType().equals(GOLD_MINE)){
                 newGameState.setGoldAmount(newGameState.getGoldAmount() + 100);
             }
-
-            peasantUnits.remove(performingUnit);
-            peasantUnits.add(newPeasant);
-            // townhallUnits.remove(townhalln);
-            // townhallUnits.add(newTownhall);
-
-            newGameState.setPeasants(peasantUnits);
-            // newGameState.setTownhalls(townhallUnits);
-            newGameState.setCost(this.getCost() + current.getCost());
-            newGameState.getActionsTillState().push(this);
-            return newGameState;
-        }
-
-        @Override
-        public double getCost() {
-            return cost;
-        }
-    }
-
-    class DepositWood implements StripsAction {
-        private SimUnit performingUnit;
-        private SimUnit townhall;
-        private double cost = 1;
-
-        public DepositGold(SimUnit performingUnit, SimUnit townhall) {
-            this.performingUnit = performingUnit;
-            this.townhall = townhall;
-        }
-
-        @Override
-        public boolean preconditionsMet(GameState state) {
-            return performingUnit.getPosition().isAdjacent(townhall.getPosition()) && performingUnit.getCargoAmount() > 0;
-        }
-
-        @Override
-        public GameState apply(GameState current) {
-            GameState newGameState = new GameState(current);
-            List<SimUnit> peasantUnits = new ArrayList<>(newGameState.getPeasants());
-            // List<SimUnit> townhallUnits = new ArrayList<>(newGameState.getTownhalls());
-            SimUnit newPeasant = new SimUnit(performingUnit);
-            // SimUnit newTownhall = new SimUnit(townhall);
-
-            //move cargo from peasant to townhall
-            newPeasant.setCargoAmount(0);
-            if(newPeasant.getCargoType().equals(WOOD)){
+            else if(newPeasant.getCargoType().equals(WOOD)){
                 newGameState.setWoodAmount(newGameState.getWoodAmount() + 100);
             }
 
@@ -397,7 +353,8 @@ public class GameState implements Comparable<GameState> {
             return cost;
         }
     }
-   
+
+    
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -492,6 +449,12 @@ public class GameState implements Comparable<GameState> {
                 StripsAction harvestGold = new HarvestGold(peasant, gold);
                 if(harvestGold.preconditionsMet(this)) {
                     children.add(harvestGold.apply(this));
+                }
+            }
+            for(SimUnit townhall: townhalls) {
+                StripsAction deposit = new Deposit(peasant, townhall);
+                if (deposit.preconditionsMet(this)) {
+                    children.add(deposit.apply(this));
                 }
             }
         }
