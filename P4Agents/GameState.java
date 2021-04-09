@@ -204,7 +204,7 @@ public class GameState implements Comparable<GameState> {
 
         private SimUnit performingUnit;
         private SimResource gold;
-        private double cost;
+        private double cost = 1;
     
         public HarvestGold(SimUnit performingUnit, SimResource gold) {
             this.performingUnit = performingUnit;
@@ -256,7 +256,7 @@ public class GameState implements Comparable<GameState> {
 
         private SimUnit performingUnit;
         private SimResource tree;
-        private double cost;
+        private double cost = 1;
     
         public HarvestWood(SimUnit performingUnit, SimResource tree) {
             this.performingUnit = performingUnit;
@@ -307,7 +307,7 @@ public class GameState implements Comparable<GameState> {
     class DepositGold implements StripsAction {
         private SimUnit performingUnit;
         private SimUnit townhall;
-        private double cost;
+        private double cost = 1;
 
         public DepositGold(SimUnit performingUnit, SimUnit townhall) {
             this.performingUnit = performingUnit;
@@ -354,7 +354,7 @@ public class GameState implements Comparable<GameState> {
     class DepositWood implements StripsAction {
         private SimUnit performingUnit;
         private SimUnit townhall;
-        private double cost;
+        private double cost = 1;
 
         public DepositGold(SimUnit performingUnit, SimUnit townhall) {
             this.performingUnit = performingUnit;
@@ -479,8 +479,36 @@ public class GameState implements Comparable<GameState> {
      * @return A list of the possible successor states and their associated actions
      */
     public List<GameState> generateChildren() {
-        // TODO: Implement me!
-        return null;
+        List<GameState> children = new ArrayList<>();
+        for(SimUnit peasant : getPeasants()) {
+            StripsAction moveToWood = new MoveUnitFromBaseToWood(peasant.getID(), this);
+            if (moveToWood.preconditionsMet(this)){
+                children.add(moveToWood.apply(this));
+            }
+            StripsAction moveToMine = new MoveUnitFromBaseToMine(peasant.getID(), this);
+            if (moveToMine.preconditionsMet(this)){
+                children.add(moveToMine.apply(this));
+            }
+            StripsAction moveToBase = new MoveUnitToBase(peasant.getID(), this);
+            if(moveToBase.preconditionsMet(this)){
+                children.add(moveToBase.apply(this));
+            }
+        }
+        for(SimUnit peasant : getPeasants()) {
+            for(SimResource wood : woods) {
+                StripsAction harvestWood = new HarvestWood(peasant, wood);
+                if(harvestWood.preconditionsMet(this)) {
+                    children.add(harvestWood.apply(this));
+                }
+            }
+            for(SimResource gold : golds) {
+                StripsAction harvestGold = new HarvestGold(peasant, gold);
+                if(harvestGold.preconditionsMet(this)) {
+                    children.add(harvestGold.apply(this));
+                }
+            }
+        }
+        return children;
     }
 
     /**
