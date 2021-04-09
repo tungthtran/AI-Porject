@@ -85,8 +85,36 @@ public class PEAgent extends Agent {
      */
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
-        // TODO: Implement me!
-        return null;
+        Map<Integer, Action> actionMap = new HashMap<>();
+
+        //put actions of each unit to the map of actions 
+        for(int unitId : stateView.getUnitIds(playernum)) {
+            Unit.UnitView unit = stateView.getUnit(unitId);
+            String unitType = unit.getTemplateView().getName().toLowerCase();
+
+            //if the turn is not the first turn and the plan is not empty
+            if (stateView.getTurnNumber() != 0) {
+                Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
+
+                for (ActionResult result : actionResults.values()) {
+                    if (result.getFeedback() == ActionFeedback.INCOMPLETE) {
+                        actionMap.put(result.getAction().getUnitId(), result.getAction());
+                    }
+                    
+                }
+            }
+            if (!plan.isEmpty()) {
+                if(unitType.equals("peasant") && (plan.peek().actionType() == "Deposit" || plan.peek().actionType() == "Harvest")) {
+                    StripsAction act = plan.pop();
+                    actionMap.put(peasantIdMap.get(unitId), createSepiaAction(act));
+                }
+                else if (unitType.equals("townhall") && plan.peek().actionType() == "BuildPeasant") {
+                    StripsAction act = plan.pop();
+                    actionMap.put(townhallId, createSepiaAction(act));
+                }
+            }
+        }
+        return actionMap;
     }
 
     /**
@@ -113,6 +141,20 @@ public class PEAgent extends Agent {
      * @return SEPIA representation of same action
      */
     private Action createSepiaAction(StripsAction action) {
+        int peasantId = peasantIdMap.get(action.getUnitIndex());
+
+        if (action.getType() == "Deposit") {
+            return Action.createPrimitiveDeposit(peasantId, action.getDirection());
+        }
+        else if (action.getType() == "Harvest") {
+            return Action.createPrimitiveGather(peasantId, action.getDirection());
+        }
+        else if (action.getType() == "Build") {
+            return Action.createPrimitiveProduction(townhallId, peasantTemplateId);
+        }
+        else if (action.getType() == "Move") {
+            return Action.createCompoundMove(peasantId, action.x, int action.y);
+        }
         return null;
     }
 
