@@ -1,5 +1,6 @@
 import edu.cwru.sepia.agent.planner.actions.*;
 import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
+import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 
 import java.util.*;
@@ -20,9 +21,9 @@ import actions.StripsAction;
  *
  * state.getXExtent() and state.getYExtent() to get the map size
  *
-  * Note that SEPIA saves the townhall as a unit. Therefore when you create a GameState instance,
+  * Note that SEPIA saves the townhall as a performingUnit. Therefore when you create a GameState instance,
  * you must be able to distinguish the townhall from a peasant. This can be done by getting
- * the name of the unit type from that unit's TemplateView:
+ * the name of the performingUnit type from that performingUnit's TemplateView:
  * state.getUnit(id).getTemplateView().getName().toLowerCase(): returns "townhall" or "peasant"
  * 
  * You will also need to distinguish between gold mines and trees.
@@ -39,17 +40,11 @@ import actions.StripsAction;
  */
 public class GameState implements Comparable<GameState> {
 
-    //
     private int xExtent;
-    //
     private int yExtent;
-    //
     public State.StateView state;
-    //
     private int playernum;
-    //
     private int requiredGold;
-    //
     private int requiredWood;
     private int goldAmount;
     private int woodAmount;
@@ -60,7 +55,7 @@ public class GameState implements Comparable<GameState> {
     private List<SimResource> golds = new ArrayList<>();
     private Map<Position, SimResource> resourcesPositions = new HashMap<>();
     private double cost;
-    public Stack<StripsAction> actionsTillState;
+    private Stack<StripsAction> actionsTillState;
 
     class MoveUnitFromBaseToMine implements StripsAction {
         private int unitID;
@@ -71,9 +66,9 @@ public class GameState implements Comparable<GameState> {
         
         public MoveUnitFromBaseToMine(int unitID, GameState state){
             this.unitID = unitID;
-            for(SimUnit unit : state.peasants){
-                if(unitID == unit.getID()){
-                    performingUnit = new SimUnit(unit);
+            for(SimUnit performingUnit : state.getPeasants()){
+                if(unitID == performingUnit.getID()){
+                    performingUnit = new SimUnit(performingUnit);
                     break;
                 }
             }
@@ -87,23 +82,27 @@ public class GameState implements Comparable<GameState> {
             }
             cost = minDistance;
         }
-        public boolean preconditionsMet(){
+
+        public boolean preconditionsMet(GameState state){
             return performingUnit.getPosition().equals(townhall.getPosition());
         }
+
         public GameState apply(GameState current){
             GameState result = new GameState(current);
-            for (SimUnit peasant : result.peasants){
+            for (SimUnit peasant : result.getPeasants()){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestGoldMine.getPosition());
                 }
             }
-            result.actionsTillState.push(this);
+            result.getActionsTillState().push(this);
             result.setCost(this.cost+current.getCost());
             return result;
         }
+    
         public double getCost(){
             return cost;
         }
+
     }
     class MoveUnitFromBaseToWood implements StripsAction {
         private int unitID;
@@ -114,9 +113,9 @@ public class GameState implements Comparable<GameState> {
         
         public MoveUnitFromBaseToWood(int unitID, GameState state){
             this.unitID = unitID;
-            for(SimUnit unit : state.peasants){
-                if(unitID == unit.getID()){
-                    performingUnit = new SimUnit(unit);
+            for(SimUnit performingUnit : state.getPeasants()){
+                if(unitID == performingUnit.getID()){
+                    performingUnit = new SimUnit(performingUnit);
                     break;
                 }
             }
@@ -130,7 +129,7 @@ public class GameState implements Comparable<GameState> {
             }
             cost = minDistance;
         }
-        public boolean preconditionsMet(){
+        public boolean preconditionsMet(GameState state){
             return performingUnit.getPosition().equals(townhall.getPosition());
         }
         public GameState apply(GameState current){
@@ -140,7 +139,7 @@ public class GameState implements Comparable<GameState> {
                     peasant.setPosition(closestWood.getPosition());
                 }
             }
-            result.actionsTillState.push(this);
+            result.getActionsTillState().push(this);
             result.setCost(this.cost+current.getCost());
             return result;
         }
@@ -154,20 +153,22 @@ public class GameState implements Comparable<GameState> {
         private SimUnit townhall;
         private double cost;
         
-        public MoveUnitFromWoodToBase(int unitID, GameState state){
+        public MoveUnitToBase(int unitID, GameState state){
             this.unitID = unitID;
-            for(SimUnit unit : state.peasants){
-                if(unitID == unit.getID()){
-                    performingUnit = new SimUnit(unit);
+            for(SimUnit performingUnit : state.getPeasants()){
+                if(unitID == performingUnit.getID()){
+                    performingUnit = new SimUnit(performingUnit);
                     break;
                 }
             }
             townhall = townhalls.get(0);
             cost = performingUnit.getPosition().chebyshevDistance(townhall.getPosition());
         }
-        public boolean preconditionsMet(){
+
+        public boolean preconditionsMet(GameState state){
             return !performingUnit.getPosition().equals(townhall.getPosition());
         }
+
         public GameState apply(GameState current){
             GameState result = new GameState(current);
             for (SimUnit peasant : result.peasants){
@@ -175,7 +176,7 @@ public class GameState implements Comparable<GameState> {
                     peasant.setPosition(townhall.getPosition());
                 }
             }
-            result.actionsTillState.push(this);
+            result.getActionsTillState().push(this);
             result.setCost(this.cost+current.getCost());
             return result;
         }
@@ -183,6 +184,112 @@ public class GameState implements Comparable<GameState> {
             return cost;
         }
     }
+
+    class HarvestGold implements StripsAction{
+
+        private SimUnit performingUnit;
+        private SimResource gold;
+        private double cost;
+    
+        public HarvestGold(SimUnit performingUnit, SimResource gold) {
+            this.performingUnit = performingUnit;
+            this.gold = gold;
+        }
+    
+        @Override
+        public boolean preconditionsMet(GameState state) {
+            return gold.getType().equals(Type.GOLD_MINE)
+                    && performingUnit.getPosition().isAdjacent(gold.getPosition())
+                    && performingUnit.getCargoAmount() == 0
+                    && state.getGoldAmount() < state.getRequiredGold();
+        }
+    
+        @Override
+        public GameState apply(GameState current) {
+            GameState newGameState = new GameState(current);
+            List<SimResource> golds = new ArrayList<>(newGameState.getGolds());
+            SimResource newGold = new SimResource(gold);
+            
+            // take 100 golds from the mine
+            newGold.getCollectedFrom();
+            golds.remove(gold);
+            // if the gold mine still has gold left
+            if(newGold.getAmountLeft() > 0) {
+                golds.add(newGold);
+            }
+
+            List<SimUnit> units = new ArrayList<>(newGameState.getPeasants());
+            SimUnit newUnit = new SimUnit(performingUnit);
+            newUnit.setCargoAmount(100);
+            newUnit.setCargoType(ResourceType.GOLD);
+            units.remove(performingUnit);
+            units.add(newUnit);
+            newGameState.setPeasants(units);
+            newGameState.setGolds(golds);
+            newGameState.setCost(this.getCost() + current.getCost());
+            newGameState.getActionsTillState().push(this);
+            return newGameState;
+        }
+
+        @Override
+        public double getCost() {
+            return cost;
+        }
+    }
+
+    public class HarvestWood implements StripsAction{
+
+        private SimUnit performingUnit;
+        private SimResource tree;
+        private double cost;
+    
+        public HarvestWood(SimUnit performingUnit, SimResource tree) {
+            this.performingUnit = performingUnit;
+            this.tree = tree;
+        }
+    
+        @Override
+        public boolean preconditionsMet(GameState state) {
+            return tree.getType().equals(Type.TREE)
+                    && performingUnit.getPosition().isAdjacent(tree.getPosition())
+                    && performingUnit.getCargoAmount() == 0
+                    && state.getWoodAmount() < state.getRequiredWood();
+        }
+    
+        @Override
+        public GameState apply(GameState current) {
+            GameState newGameState = new GameState(current);
+            List<SimResource> woods = new ArrayList<>(newGameState.getWoods());
+            SimResource newTree = new SimResource(tree);
+            
+            // take 100 golds from the mine
+            newTree.getCollectedFrom();
+            woods.remove(tree);
+            // if the gold mine still has gold left
+            if(newTree.getAmountLeft() > 0) {
+                golds.add(newTree);
+            }
+
+            List<SimUnit> units = new ArrayList<>(newGameState.getPeasants());
+            SimUnit newUnit = new SimUnit(performingUnit);
+            newUnit.setCargoAmount(100);
+            newUnit.setCargoType(ResourceType.WOOD);
+            units.remove(performingUnit);
+            units.add(newUnit);
+            newGameState.setPeasants(units);
+            newGameState.setWoods(woods);
+            newGameState.setCost(this.getCost() + current.getCost());
+            newGameState.getActionsTillState().push(this);
+            return newGameState;
+        }
+
+        @Override
+        public double getCost() {
+            return cost;
+        }
+    }
+
+   
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
      * nodes should be constructed from the another constructor you create or by factory functions that you create.
@@ -203,12 +310,12 @@ public class GameState implements Comparable<GameState> {
         this.requiredWood = requiredWood;
         this.buildPeasants = buildPeasants;
 
-        state.getAllUnits().stream().forEach( unit -> {
-            if(unit.getTemplateView().getName().toLowerCase().equals("townhall")) {
-                townhalls.add( new SimUnit(unit));
+        state.getAllUnits().stream().forEach( performingUnit -> {
+            if(performingUnit.getTemplateView().getName().toLowerCase().equals("townhall")) {
+                townhalls.add( new SimUnit(performingUnit));
             }
-            else if(unit.getTemplateView().getName().toLowerCase().equals("peasant")) {
-                peasants.add(new SimUnit(unit));
+            else if(performingUnit.getTemplateView().getName().toLowerCase().equals("peasant")) {
+                peasants.add(new SimUnit(performingUnit));
             }
         });
 
@@ -242,7 +349,7 @@ public class GameState implements Comparable<GameState> {
         this.cost = gameState.cost;
         this.goldAmount = gameState.goldAmount;
         this.woodAmount = gameState.woodAmount;
-        Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)gameState.actionsTillState.clone();
+        Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)gameState.getActionsTillState().clone();
         this.actionsTillState = cloneActionsTillState;
     }
     /**
@@ -456,4 +563,14 @@ public class GameState implements Comparable<GameState> {
     public void setCost(double cost) {
         this.cost = cost;
     }
+
+    public Stack<StripsAction> getActionsTillState() {
+        return actionsTillState;
+    }
+
+    public void setActionsTillState(Stack<StripsAction> actionsTillState) {
+        this.actionsTillState = actionsTillState;
+    }
+
+    
 }
