@@ -80,11 +80,11 @@ public class GameState implements Comparable<GameState> {
                     minDistance = goldMine.getPosition().chebyshevDistance(townhall.getPosition());
                 }
             }
-            cost = minDistance;
+            cost = minDistance - 1;
         }
 
         public boolean preconditionsMet(GameState state){
-            return performingUnit.getPosition().equals(townhall.getPosition());
+            return performingUnit.getPosition().isAdjacent(townhall.getPosition());
         }
 
         public GameState apply(GameState current){
@@ -92,6 +92,11 @@ public class GameState implements Comparable<GameState> {
             for (SimUnit peasant : result.getPeasants()){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestGoldMine.getPosition());
+                    for(Position adjacent : closestGoldMine.getPosition().getAdjacentPositions()){
+                        if(adjacent.chebyshevDistance(closestGoldMine.getPosition())<peasant.getPosition().chebyshevDistance(closestGoldMine.getPosition())){
+                            peasant.setPosition(adjacent);
+                        }
+                    }
                 }
             }
             result.getActionsTillState().push(this);
@@ -127,16 +132,21 @@ public class GameState implements Comparable<GameState> {
                     minDistance = wood.getPosition().chebyshevDistance(townhall.getPosition());
                 }
             }
-            cost = minDistance;
+            cost = minDistance - 1;
         }
         public boolean preconditionsMet(GameState state){
-            return performingUnit.getPosition().equals(townhall.getPosition());
+            return performingUnit.getPosition().isAdjacent(townhall.getPosition());
         }
         public GameState apply(GameState current){
             GameState result = new GameState(current);
             for (SimUnit peasant : result.peasants){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestWood.getPosition());
+                    for(Position adjacent : closestWood.getPosition().getAdjacentPositions()){
+                        if(adjacent.chebyshevDistance(closestWood.getPosition())<peasant.getPosition().chebyshevDistance(closestWood.getPosition())){
+                            peasant.setPosition(adjacent);
+                        }
+                    }
                 }
             }
             result.getActionsTillState().push(this);
@@ -166,7 +176,7 @@ public class GameState implements Comparable<GameState> {
         }
 
         public boolean preconditionsMet(GameState state){
-            return !performingUnit.getPosition().equals(townhall.getPosition());
+            return !performingUnit.getPosition().isAdjacent(townhall.getPosition());
         }
 
         public GameState apply(GameState current){
@@ -174,6 +184,11 @@ public class GameState implements Comparable<GameState> {
             for (SimUnit peasant : result.peasants){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(townhall.getPosition());
+                    for(Position adjacent : townhall.getPosition().getAdjacentPositions()){
+                        if(adjacent.chebyshevDistance(townhall.getPosition())<peasant.getPosition().chebyshevDistance(townhall.getPosition())){
+                            peasant.setPosition(adjacent);
+                        }
+                    }
                 }
             }
             result.getActionsTillState().push(this);
@@ -189,7 +204,7 @@ public class GameState implements Comparable<GameState> {
 
         private SimUnit performingUnit;
         private SimResource gold;
-        private double cost;
+        private double cost = 1;
     
         public HarvestGold(SimUnit performingUnit, SimResource gold) {
             this.performingUnit = performingUnit;
@@ -241,7 +256,7 @@ public class GameState implements Comparable<GameState> {
 
         private SimUnit performingUnit;
         private SimResource tree;
-        private double cost;
+        private double cost = 1;
     
         public HarvestWood(SimUnit performingUnit, SimResource tree) {
             this.performingUnit = performingUnit;
@@ -289,6 +304,99 @@ public class GameState implements Comparable<GameState> {
         }
     }
 
+    class DepositGold implements StripsAction {
+        private SimUnit performingUnit;
+        private SimUnit townhall;
+        private double cost = 1;
+
+        public DepositGold(SimUnit performingUnit, SimUnit townhall) {
+            this.performingUnit = performingUnit;
+            this.townhall = townhall;
+        }
+
+        @Override
+        public boolean preconditionsMet(GameState state) {
+            return performingUnit.getPosition().isAdjacent(townhall.getPosition()) && performingUnit.getCargoAmount() > 0;
+        }
+
+        @Override
+        public GameState apply(GameState current) {
+            GameState newGameState = new GameState(current);
+            List<SimUnit> peasantUnits = new ArrayList<>(newGameState.getPeasants());
+            // List<SimUnit> townhallUnits = new ArrayList<>(newGameState.getTownhalls());
+            SimUnit newPeasant = new SimUnit(performingUnit);
+            // SimUnit newTownhall = new SimUnit(townhall);
+
+            //move cargo from peasant to townhall
+            newPeasant.setCargoAmount(0);
+            if(newPeasant.getCargoType().equals(GOLD_MINE)){
+                newGameState.setGoldAmount(newGameState.getGoldAmount() + 100);
+            }
+
+            peasantUnits.remove(performingUnit);
+            peasantUnits.add(newPeasant);
+            // townhallUnits.remove(townhalln);
+            // townhallUnits.add(newTownhall);
+
+            newGameState.setPeasants(peasantUnits);
+            // newGameState.setTownhalls(townhallUnits);
+            newGameState.setCost(this.getCost() + current.getCost());
+            newGameState.getActionsTillState().push(this);
+            return newGameState;
+        }
+
+        @Override
+        public double getCost() {
+            return cost;
+        }
+    }
+
+    class DepositWood implements StripsAction {
+        private SimUnit performingUnit;
+        private SimUnit townhall;
+        private double cost = 1;
+
+        public DepositGold(SimUnit performingUnit, SimUnit townhall) {
+            this.performingUnit = performingUnit;
+            this.townhall = townhall;
+        }
+
+        @Override
+        public boolean preconditionsMet(GameState state) {
+            return performingUnit.getPosition().isAdjacent(townhall.getPosition()) && performingUnit.getCargoAmount() > 0;
+        }
+
+        @Override
+        public GameState apply(GameState current) {
+            GameState newGameState = new GameState(current);
+            List<SimUnit> peasantUnits = new ArrayList<>(newGameState.getPeasants());
+            // List<SimUnit> townhallUnits = new ArrayList<>(newGameState.getTownhalls());
+            SimUnit newPeasant = new SimUnit(performingUnit);
+            // SimUnit newTownhall = new SimUnit(townhall);
+
+            //move cargo from peasant to townhall
+            newPeasant.setCargoAmount(0);
+            if(newPeasant.getCargoType().equals(WOOD)){
+                newGameState.setWoodAmount(newGameState.getWoodAmount() + 100);
+            }
+
+            peasantUnits.remove(performingUnit);
+            peasantUnits.add(newPeasant);
+            // townhallUnits.remove(townhalln);
+            // townhallUnits.add(newTownhall);
+
+            newGameState.setPeasants(peasantUnits);
+            // newGameState.setTownhalls(townhallUnits);
+            newGameState.setCost(this.getCost() + current.getCost());
+            newGameState.getActionsTillState().push(this);
+            return newGameState;
+        }
+
+        @Override
+        public double getCost() {
+            return cost;
+        }
+    }
    
     /**
      * Construct a GameState from a stateview object. This is used to construct the initial search node. All other
@@ -400,7 +508,16 @@ public class GameState implements Comparable<GameState> {
      */
     public double heuristic() {
         // TODO: Implement me!
-        return 0.0;
+        Position townhall = townhalls.get(0).getPosition()
+        int distanceToClosestGoldMine = golds.get(0).getPosition().chebyshevDistance(townhall);
+        int distanceToclosestWood = woods.get(0).getPosition().chebyshevDistance(townhall);
+        for (SimResource mine : golds){
+            distanceToClosestGoldMine = Math.max(mine.getPosition().chebyshevDistance(townhall),distanceToClosestGoldMine);
+        }
+        for (SimResource wood : woods){
+            distanceToClosestGoldMine = Math.max(wood.getPosition().chebyshevDistance(townhall),distanceToClosestWood);
+        }
+        return 2*distanceToClosestGoldMine*(requiredGold - goldAmount) + 2*distanceToClosestWood*(requiredWood - woodAmount);
     }
 
     /**
