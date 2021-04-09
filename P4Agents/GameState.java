@@ -493,7 +493,16 @@ public class GameState implements Comparable<GameState> {
      */
     public double heuristic() {
         // TODO: Implement me!
-        return 0.0;
+        Position townhall = townhalls.get(0).getPosition()
+        int distanceToClosestGoldMine = golds.get(0).getPosition().chebyshevDistance(townhall);
+        int distanceToclosestWood = woods.get(0).getPosition().chebyshevDistance(townhall);
+        for (SimResource mine : golds){
+            distanceToClosestGoldMine = Math.max(mine.getPosition().chebyshevDistance(townhall),distanceToClosestGoldMine);
+        }
+        for (SimResource wood : woods){
+            distanceToClosestGoldMine = Math.max(wood.getPosition().chebyshevDistance(townhall),distanceToClosestWood);
+        }
+        return 2*distanceToClosestGoldMine*(requiredGold - goldAmount) + 2*distanceToClosestWood*(requiredWood - woodAmount);
     }
 
     /**
