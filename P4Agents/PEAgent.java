@@ -99,15 +99,16 @@ public class PEAgent extends Agent {
                 }
             }
         }
-        StripsAction action = plan.pop();
-        UnitView peasant = stateView.getUnit(action.getUnitId());
-        if(peasant == null) {
-            plan.push(action);
-            return;
+        while (!plan.isEmpty()) {
+            StripsAction action = plan.pop();
+            UnitView peasant = stateView.getUnit(action.getUnitId());
+            if(peasant == null) {
+                plan.push(action);
+                continue;
+            }
+            Action act = createSepiaAction(action);
+            actionMap.put(act.getUnitId(), act);
         }
-        Action act = createSepiaAction(action);
-        actionMap.put(act.getUnitId(), act);
-
         return actionMap;
     }
 
