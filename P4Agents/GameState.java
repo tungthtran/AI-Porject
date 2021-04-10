@@ -117,6 +117,18 @@ public class GameState implements Comparable<GameState> {
         public String getType() {
             return "MoveToGold";
         }
+        public SimUnit getPerformingUnit() {
+            return performingUnit;
+        }
+        public SimUnit getTownhall() {
+            return townhall;
+        }
+        public SimResource getGold() {
+            return this.closestGoldMine;
+        }
+        public SimResource getWood() {
+            return null;
+        }
 
     }
     class MoveUnitFromBaseToWood implements StripsAction {
@@ -174,6 +186,18 @@ public class GameState implements Comparable<GameState> {
         public String getType() {
             return "MoveToWood";
         }
+        public SimUnit getPerformingUnit() {
+            return performingUnit;
+        }
+        public SimUnit getTownhall() {
+            return this.townhall;
+        }
+        public SimResource getGold() {
+            return null;
+        }
+        public SimResource getWood() {
+            return this.closestWood;
+        }
     }
     class MoveUnitToBase implements StripsAction {
         private int unitID = peasants.get(0).getID();
@@ -219,10 +243,25 @@ public class GameState implements Comparable<GameState> {
         public int getUnitId() {
             return unitID;
         }
+        public String getType() {
+            return "MoveToBase"
+        }
+        public SimUnit getPerformingUnit() {
+            return performingUnit;
+        }
+        public SimUnit getTownhall() {
+            return this.townhall;
+        }
+        public SimResource getGold() {
+            return null;
+        }
+        public SimResource getWood() {
+            return null;
+        }
     }
 
     class HarvestGold implements StripsAction{
-        private int unitID;
+        private int unitID = peasants.get(0).getID();
         private SimUnit performingUnit;
         private SimResource gold;
         private double cost = 1;
@@ -275,10 +314,22 @@ public class GameState implements Comparable<GameState> {
         public String getType() {
             return "HarvestGold";
         }
+        public SimUnit getPerformingUnit() {
+            return performingUnit;
+        }
+        public SimUnit getTownhall() {
+            return null;
+        }
+        public SimResource getGold() {
+            return this.gold;
+        }
+        public SimResource getWood() {
+            return null;
+        }
     }
 
     public class HarvestWood implements StripsAction{
-        private int unitID;
+        private int unitID = peasants.get(0).getID();
         private SimUnit performingUnit;
         private SimResource tree;
         private double cost = 1;
@@ -333,10 +384,22 @@ public class GameState implements Comparable<GameState> {
         public String getType() {
             return "HarvestWood";
         }
+        public SimUnit getPerformingUnit() {
+            return performingUnit;
+        }
+        public SimUnit getTownhall() {
+            return null;
+        }
+        public SimResource getGold() {
+            return null;
+        }
+        public SimResource getWood() {
+            return this.tree;
+        }
     }
 
     class Deposit implements StripsAction {
-        private int unitID;
+        private int unitID = peasants.get(0).getID();
         private SimUnit performingUnit;
         private SimUnit townhall;
         private double cost = 1;
@@ -390,6 +453,18 @@ public class GameState implements Comparable<GameState> {
         }
         public String getType() {
             return "Deposit";
+        }
+        public SimUnit getPerformingUnit() {
+            return this.performingUnit;
+        }
+        public SimUnit getTownhall() {
+            return this.townhall;
+        }
+        public SimResource getGold() {
+            return null;
+        }
+        public SimResource getWood() {
+            return null;
         }
     }
 

@@ -38,4 +38,10 @@ public interface StripsAction {
      */
     public GameState apply(GameState state);
     public double getCost();
+    public int getUnitId();
+    public String getType();
+    public SimUnit getPerformingUnit();
+    public SimUnit getTownhall();
+    public SimResource getGold();
+    public SimResource getWood();
 }
