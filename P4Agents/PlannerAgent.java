@@ -97,7 +97,7 @@ public class PlannerAgent extends Agent {
         GameState current = null;
         // Add the starting state into the openList
         openList.add(startState);
-        List<GameState> neighbors = new List<>();
+        List<GameState> neighbors = new ArrayList<>();
         while (!openList.isEmpty()){
             //choose the state with the lowest estimated cost
             current = openList.poll();
@@ -113,7 +113,7 @@ public class PlannerAgent extends Agent {
             }
 
         }
-        return current.getPlan();
+        return current.getActionsTillState();
     }
 
     /**
