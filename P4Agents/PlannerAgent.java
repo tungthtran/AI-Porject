@@ -81,7 +81,13 @@ public class PlannerAgent extends Agent {
     public void loadPlayerData(InputStream inputStream) {
 
     }
-
+    private Stack<StripsAction> reverseStack(Stack<StripsAction> input){
+        Stack<StripsAction> result = new Stack<StripsAction>();
+        while(!input.isEmpty()){
+            result.push(input.pop());
+        }
+        return result;
+    }
     /**
      * Perform an A* search of the game graph. This should return your plan as a stack of actions. This is essentially
      * the same as your first assignment. The implementations should be very similar. The difference being that your
@@ -109,11 +115,11 @@ public class PlannerAgent extends Agent {
             neighbors = current.generateChildren();
             //expand to the neighbor state
             for(GameState neighbor : neighbors){
-                openList.add(neighbor);
+                if(!closedList.contains(neighbor))openList.add(neighbor);
             }
 
         }
-        return current.getActionsTillState();
+        return reverseStack(current.getActionsTillState());
     }
 
     /**
