@@ -147,9 +147,9 @@ public class PEAgent extends Agent {
             Postion destinationPos = action.getWood().getPosition();
             return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
         }
-        // else if (action.getType() == "Build") {
-        //     return Action.createPrimitiveProduction(townhallId, peasantTemplateId);
-        // }
+        else if (action.getType() == "Build") {
+            return Action.createPrimitiveProduction(townhallId, peasantTemplateId);
+        }
         else if (action.getType() == "MoveToGold") {
             Postion destinationPos = action.getGold().getPosition();
             return Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y);
