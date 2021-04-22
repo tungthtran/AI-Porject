@@ -522,7 +522,7 @@ public class GameState implements Comparable<GameState> {
 
     public GameState(GameState gameState) {
         this.state = gameState.getState();
-        this.buildPeasants = gameState.buildPeasants;
+        this.buildPeasants = gameState.isBuildPeasants();
         this.playernum = gameState.getPlayernum();
         this.requiredGold = gameState.getRequiredGold();
         this.requiredWood = gameState.getRequiredWood();
@@ -827,6 +827,8 @@ public class GameState implements Comparable<GameState> {
     public void setActionsTillState(Stack<StripsAction> actionsTillState) {
         this.actionsTillState = actionsTillState;
     }
+
+
 
     
 }
