@@ -244,7 +244,7 @@ public class GameState implements Comparable<GameState> {
             return unitID;
         }
         public String getType() {
-            return "MoveToBase"
+            return "MoveToBase";
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -522,10 +522,10 @@ public class GameState implements Comparable<GameState> {
         this.requiredWood = gameState.requiredWood;
         this.xExtent = gameState.xExtent;
         this.yExtent = gameState.yExtent;
-        this.townhalls = gameState.townhalls;
-        this.peasants = gameState.peasants;
-        this.woods = gameState.woods;
-        this.golds = gameState.golds;
+        this.townhalls = new ArrayList<>(gameState.townhalls);
+        this.peasants = new ArrayList<>(gameState.peasants);
+        this.woods = new ArrayList<>(gameState.woods);
+        this.golds = new ArrayList<>(gameState.golds);
         this.cost = gameState.cost;
         this.goldAmount = gameState.goldAmount;
         this.woodAmount = gameState.woodAmount;
