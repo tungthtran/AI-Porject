@@ -91,10 +91,11 @@ public class GameState implements Comparable<GameState> {
 
         public GameState apply(GameState current){
             GameState result = new GameState(current);
+            List<Position> adjacentPositions = closestGoldMine.getPosition().getAdjacentPositions();
             for (SimUnit peasant : result.getPeasants()){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestGoldMine.getPosition());
-                    for(Position adjacent : closestGoldMine.getPosition().getAdjacentPositions()){
+                    for(Position adjacent : adjacentPositions){
                         if(adjacent.chebyshevDistance(closestGoldMine.getPosition())<peasant.getPosition().chebyshevDistance(closestGoldMine.getPosition())){
                             peasant.setPosition(adjacent);
                         }
@@ -161,10 +162,11 @@ public class GameState implements Comparable<GameState> {
         }
         public GameState apply(GameState current){
             GameState result = new GameState(current);
+            List<Position> adjacentPositions = closestWood.getPosition().getAdjacentPositions();
             for (SimUnit peasant : result.peasants){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestWood.getPosition());
-                    for(Position adjacent : closestWood.getPosition().getAdjacentPositions()){
+                    for(Position adjacent : adjacentPositions){
                         if(adjacent.chebyshevDistance(closestWood.getPosition())<peasant.getPosition().chebyshevDistance(closestWood.getPosition())){
                             peasant.setPosition(adjacent);
                         }
@@ -222,11 +224,12 @@ public class GameState implements Comparable<GameState> {
         }
 
         public GameState apply(GameState current){
+            List<Position> adjacentPositions = townhall.getPosition().getAdjacentPositions();
             GameState result = new GameState(current);
             for (SimUnit peasant : result.peasants){
                 if(peasant.getID() == unitID){
                     peasant.setPosition(townhall.getPosition());
-                    for(Position adjacent : townhall.getPosition().getAdjacentPositions()){
+                    for(Position adjacent : adjacentPositions){
                         if(adjacent.chebyshevDistance(townhall.getPosition())<peasant.getPosition().chebyshevDistance(townhall.getPosition())){
                             peasant.setPosition(adjacent);
                         }
@@ -244,7 +247,7 @@ public class GameState implements Comparable<GameState> {
             return unitID;
         }
         public String getType() {
-            return "MoveToBase"
+            return "MoveToBase";
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -325,6 +328,9 @@ public class GameState implements Comparable<GameState> {
         }
         public SimResource getWood() {
             return null;
+        }
+        public int getUnitId(){
+            return this.unitID;
         }
     }
 

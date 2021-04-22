@@ -134,32 +134,32 @@ public class PEAgent extends Agent {
      */
     private Action createSepiaAction(StripsAction action) {
         int peasantId = peasantIdMap.get(action.getUnitId());
-        Postion peasantPos = action.getPerformingUnit().getPosition();
+        Position peasantPos = action.getPerformingUnit().getPosition();
         if (action.getType() == "Deposit") {
-            Postion destinationPos = action.getTownhall().getPosition();
+            Position destinationPos = action.getTownhall().getPosition();
             return Action.createPrimitiveDeposit(peasantId, peasantPos.getDirection(destinationPos));
         }
         else if (action.getType() == "HarvestGold") {
-            Postion destinationPos = action.getGold().getPosition();
+            Position destinationPos = action.getGold().getPosition();
             return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
         }
         else if (action.getType() == "HarvestWood") {
-            Postion destinationPos = action.getWood().getPosition();
+            Position destinationPos = action.getWood().getPosition();
             return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
         }
-        else if (action.getType() == "Build") {
-            return Action.createPrimitiveProduction(townhallId, peasantTemplateId);
-        }
+        // else if (action.getType() == "Build") {
+        //     return Action.createPrimitiveProduction(townhallId, peasantTemplateId);
+        // }
         else if (action.getType() == "MoveToGold") {
-            Postion destinationPos = action.getGold().getPosition();
+            Position destinationPos = action.getGold().getPosition();
             return Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y);
         }
         else if (action.getType() == "MoveToWood") {
-            Postion destinationPos = action.getWood().getPosition();
+            Position destinationPos = action.getWood().getPosition();
             return Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y);
         }
         else if (action.getType() == "MoveToBase") {
-            Postion destinationPos = action.getTownhall().getPosition();
+            Position destinationPos = action.getTownhall().getPosition();
             return Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y);
         }
         return null;
