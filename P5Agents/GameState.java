@@ -521,17 +521,33 @@ public class GameState implements Comparable<GameState> {
     }
 
     public GameState(GameState gameState) {
-        this.state = gameState.state;
+        this.state = gameState.getState();
         this.buildPeasants = gameState.buildPeasants;
-        this.playernum = gameState.playernum;
-        this.requiredGold = gameState.requiredGold;
-        this.requiredWood = gameState.requiredWood;
-        this.xExtent = gameState.xExtent;
-        this.yExtent = gameState.yExtent;
-        this.townhalls = new ArrayList<>(gameState.townhalls);
-        this.peasants = new ArrayList<>(gameState.peasants);
-        this.woods = new ArrayList<>(gameState.woods);
-        this.golds = new ArrayList<>(gameState.golds);
+        this.playernum = gameState.getPlayernum();
+        this.requiredGold = gameState.getRequiredGold();
+        this.requiredWood = gameState.getRequiredWood();
+        this.xExtent = gameState.getXExtent();
+        this.yExtent = gameState.getYExtent();
+        this.townhalls = new ArrayList<>();
+        for (SimUnit townhall : gameState.getTownhalls()) {
+            SimUnit newTownhall = new SimUnit(townhall);
+            this.townhalls.add(newTownhall);
+        }
+        this.peasants = new ArrayList<>();
+        for (SimUnit peasant : gameState.getPeasants()) {
+            SimUnit newPeasant = new SimUnit(peasant);
+            this.peasants.add(newPeasant);
+        }
+        this.woods = new ArrayList<>();
+        for (SimResource wood : gameState.getWoods()) {
+            SimResource newWood = new SimResource(wood);
+            this.woods.add(newWood);
+        }
+        this.golds = new ArrayList<>();
+        for (SimResource gold : gameState.getGolds()) {
+            SimResource newGold = new SimResource(gold);
+            this.golds.add(newGold);
+        }
         this.cost = gameState.cost;
         this.goldAmount = gameState.goldAmount;
         this.woodAmount = gameState.woodAmount;
