@@ -111,6 +111,7 @@ public class PlannerAgent extends Agent {
             if(current.isGoal())break;
             //check if the current state is in the closed list
             if(closedList.contains(current))continue;
+            closedList.add(current);
             //generate the lists of neighbors
             neighbors = current.generateChildren();
             //expand to the neighbor state

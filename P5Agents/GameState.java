@@ -622,15 +622,20 @@ public class GameState implements Comparable<GameState> {
     public double heuristic() {
         // TODO: Implement me!
         Position townhall = townhalls.get(0).getPosition();
+        Position peasant  = peasants.get(0).getPosition();
+        double atWood = 0;
+        double atGold = 0;
         int distanceToClosestGoldMine = golds.get(0).getPosition().chebyshevDistance(townhall);
         int distanceToClosestWood = woods.get(0).getPosition().chebyshevDistance(townhall);
         for (SimResource mine : golds){
             distanceToClosestGoldMine = Math.max(mine.getPosition().chebyshevDistance(townhall),distanceToClosestGoldMine);
+            if (peasant.isAdjacent(mine.getPosition()) && requiredGold > goldAmount) atGold = 1;
         }
         for (SimResource wood : woods){
-            distanceToClosestGoldMine = Math.max(wood.getPosition().chebyshevDistance(townhall),distanceToClosestWood);
+            distanceToClosestWood = Math.max(wood.getPosition().chebyshevDistance(townhall),distanceToClosestWood);
+            if(peasant.isAdjacent(wood.getPosition()) && requiredWood > woodAmount) atWood = 1;
         }
-        return 2*distanceToClosestGoldMine*(requiredGold - goldAmount) + 2*distanceToClosestWood*(requiredWood - woodAmount);
+        return distanceToClosestGoldMine*(2*(requiredGold - goldAmount)/100 + atGold) + distanceToClosestWood*(2*(requiredWood - woodAmount)/100+atWood);
     }
 
     /**
@@ -666,43 +671,20 @@ public class GameState implements Comparable<GameState> {
             return 0;
     }
 
-    /**
-     * This will be necessary to use the GameState as a key in a Set or Map.
-     *
-     * @param o The game state to compare
-     * @return True if this state equals the other state, false otherwise.
-     */
     @Override
     public boolean equals(Object o) {
-        // TODO: Implement me!
-        if(o instanceof GameState) {
-            GameState state = (GameState)o;
-            return this.getPeasants().equals(state.getPeasants())
-                    && this.getGoldAmount() == state.getGoldAmount()
-                    && this.getWoodAmount() == state.getWoodAmount()
-                    && this.getRequiredGold() == state.getRequiredGold()
-                    && this.getRequiredWood() == state.getRequiredWood()
-                    && this.getWoods().size() == state.getWoods().size()
-                    && this.getGolds().size() == state.getGolds().size();
-        }
-        else
-            return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameState gameState = (GameState) o;
+        return Objects.equals(actionsTillState, gameState.actionsTillState);
     }
 
-    /**
-     * This is necessary to use the GameState as a key in a HashSet or HashMap. Remember that if two objects are
-     * equal they should hash to the same value.
-     *
-     * @return An integer hashcode that is equal for equal states.
-     */
     @Override
     public int hashCode() {
-        // TODO: Implement me!
-        return Objects.hash(goldAmount, woodAmount, requiredGold, requiredWood, woods.size(), golds.size());
+        return Objects.hash(actionsTillState);
     }
 
-
-    // list of getters and setters 
+    // list of getters and setters
 
     public int getXExtent() {
         return this.xExtent;
