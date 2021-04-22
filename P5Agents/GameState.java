@@ -96,7 +96,7 @@ public class GameState implements Comparable<GameState> {
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestGoldMine.getPosition());
                     for(Position adjacent : adjacentPositions){
-                        if(adjacent.chebyshevDistance(closestGoldMine.getPosition())<peasant.getPosition().chebyshevDistance(closestGoldMine.getPosition())){
+                        if(adjacent.chebyshevDistance(performingUnit.getPosition())<peasant.getPosition().chebyshevDistance(performingUnit.getPosition())){
                             peasant.setPosition(adjacent);
                         }
                     }
@@ -167,7 +167,7 @@ public class GameState implements Comparable<GameState> {
                 if(peasant.getID() == unitID){
                     peasant.setPosition(closestWood.getPosition());
                     for(Position adjacent : adjacentPositions){
-                        if(adjacent.chebyshevDistance(closestWood.getPosition())<peasant.getPosition().chebyshevDistance(closestWood.getPosition())){
+                        if(adjacent.chebyshevDistance(performingUnit.getPosition())<peasant.getPosition().chebyshevDistance(performingUnit.getPosition())){
                             peasant.setPosition(adjacent);
                         }
                     }
@@ -230,7 +230,7 @@ public class GameState implements Comparable<GameState> {
                 if(peasant.getID() == unitID){
                     peasant.setPosition(townhall.getPosition());
                     for(Position adjacent : adjacentPositions){
-                        if(adjacent.chebyshevDistance(townhall.getPosition())<peasant.getPosition().chebyshevDistance(townhall.getPosition())){
+                        if(adjacent.chebyshevDistance(performingUnit.getPosition())<peasant.getPosition().chebyshevDistance(performingUnit.getPosition())){
                             peasant.setPosition(adjacent);
                         }
                     }
