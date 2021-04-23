@@ -95,8 +95,11 @@ public class PEAgent extends Agent {
         if (stateView.getTurnNumber() != 0) {
             Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
             for (ActionResult result : actionResults.values()) {
-                if (result.getFeedback() == ActionFeedback.INCOMPLETE || result.getFeedback() == ActionFeedback.FAILED) {
+                if (result.getFeedback() == ActionFeedback.FAILED) {
                     actionMap.put(result.getAction().getUnitId(), result.getAction());
+                }
+                if (result.getFeedback() == ActionFeedback.INCOMPLETE) {
+                    return actionMap;
                 }
             }
         }
