@@ -65,6 +65,7 @@ public class GameState implements Comparable<GameState> {
         private SimUnit townhall;
         private double cost;
         private SimResource closestGoldMine;
+        private String type;
         
         public MoveUnitFromBaseToMine(int unitID, GameState state){
             this.unitID = unitID;
@@ -83,6 +84,7 @@ public class GameState implements Comparable<GameState> {
                 }
             }
             cost = minDistance - 1;
+            this.type = "MoveToGold";
         }
 
         public boolean preconditionsMet(GameState state){
@@ -116,7 +118,7 @@ public class GameState implements Comparable<GameState> {
         }
 
         public String getType() {
-            return "MoveToGold";
+            return type;
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -138,6 +140,7 @@ public class GameState implements Comparable<GameState> {
         private SimUnit townhall;
         private double cost;
         private SimResource closestWood;
+        private String type;
         
         public MoveUnitFromBaseToWood(int unitID, GameState state){
             this.unitID = unitID;
@@ -156,6 +159,7 @@ public class GameState implements Comparable<GameState> {
                 }
             }
             cost = minDistance - 1;
+            this.type = "MoveToWood";
         }
         public boolean preconditionsMet(GameState state){
             return !(performingUnit == null) && performingUnit.getPosition().isAdjacent(townhall.getPosition());
@@ -186,7 +190,7 @@ public class GameState implements Comparable<GameState> {
             return unitID;
         }
         public String getType() {
-            return "MoveToWood";
+            return type;
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -206,6 +210,7 @@ public class GameState implements Comparable<GameState> {
         private SimUnit performingUnit = peasants.get(0);
         private SimUnit townhall;
         private double cost;
+        private String type;
         
         public MoveUnitToBase(int unitID, GameState state){
             this.unitID = unitID;
@@ -217,6 +222,7 @@ public class GameState implements Comparable<GameState> {
             }
             townhall = townhalls.get(0);
             cost = performingUnit.getPosition().chebyshevDistance(townhall.getPosition());
+            this.type = "MoveToBase";
         }
 
         public boolean preconditionsMet(GameState state){
@@ -247,7 +253,7 @@ public class GameState implements Comparable<GameState> {
             return unitID;
         }
         public String getType() {
-            return "MoveToBase";
+            return type;
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -268,10 +274,12 @@ public class GameState implements Comparable<GameState> {
         private SimUnit performingUnit;
         private SimResource gold;
         private double cost = 1;
+        private String type;
     
         public HarvestGold(SimUnit performingUnit, SimResource gold) {
             this.performingUnit = performingUnit;
             this.gold = gold;
+            this.type = "HarvestGold";
         }
     
         @Override
@@ -315,7 +323,7 @@ public class GameState implements Comparable<GameState> {
         }
 
         public String getType() {
-            return "HarvestGold";
+            return type;
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -339,10 +347,12 @@ public class GameState implements Comparable<GameState> {
         private SimUnit performingUnit;
         private SimResource tree;
         private double cost = 1;
+        private String type;
     
         public HarvestWood(SimUnit performingUnit, SimResource tree) {
             this.performingUnit = performingUnit;
             this.tree = tree;
+            this.type = "HarvestWood";
         }
     
         @Override
@@ -388,7 +398,7 @@ public class GameState implements Comparable<GameState> {
             return unitID;
         }
         public String getType() {
-            return "HarvestWood";
+            return type;
         }
         public SimUnit getPerformingUnit() {
             return performingUnit;
@@ -409,10 +419,12 @@ public class GameState implements Comparable<GameState> {
         private SimUnit performingUnit;
         private SimUnit townhall;
         private double cost = 1;
+        private String type;
 
         public Deposit(SimUnit performingUnit, SimUnit townhall) {
             this.performingUnit = performingUnit;
             this.townhall = townhall;
+            this.type = "Deposit";
         }
 
         @Override
@@ -458,7 +470,7 @@ public class GameState implements Comparable<GameState> {
             return unitID;
         }
         public String getType() {
-            return "Deposit";
+            return type;
         }
         public SimUnit getPerformingUnit() {
             return this.performingUnit;
