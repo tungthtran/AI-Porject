@@ -97,8 +97,11 @@ public class PEAgent extends Agent {
             for (ActionResult result : actionResults.values()) {
                 if (result.getFeedback() == ActionFeedback.FAILED) {
                     actionMap.put(result.getAction().getUnitId(), result.getAction());
+                    System.out.println("action fail");
+                    return actionMap;
                 }
                 if (result.getFeedback() == ActionFeedback.INCOMPLETE) {
+                    System.out.println("incomplete");
                     return actionMap;
                 }
             }
@@ -107,7 +110,7 @@ public class PEAgent extends Agent {
         Action act = createSepiaAction(action);
         if (act == null) return actionMap;
         actionMap.put(act.getUnitId(), act);
-
+        System.out.println("success");
         return actionMap;
     }
 
@@ -138,16 +141,17 @@ public class PEAgent extends Agent {
         int peasantId = peasantIdMap.get(action.getUnitId());
         Position peasantPos = action.getPerformingUnit().getPosition();
         if (action.getType().equals("Deposit")) {
-            Position destinationPos = action.getTownhall().getPosition();
-            return Action.createPrimitiveDeposit(peasantId, peasantPos.getDirection(destinationPos));
+//            Position destinationPos = action.getTownhall().getPosition();
+            return Action.createCompoundDeposit(peasantId, action.getTownhall().getID());
         }
         else if (action.getType().equals("HarvestGold")) {
-            Position destinationPos = action.getGold().getPosition();
-            return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
+//            Position destinationPos = action.getGold().getPosition();
+            return Action.createCompoundGather(peasantId, action.getGold().getID());
         }
         else if (action.getType().equals("HarvestWood")) {
-            Position destinationPos = action.getWood().getPosition();
-            return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
+//            Position destinationPos = action.getWood().getPosition();
+//            return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
+            return Action.createCompoundGather(peasantId, action.getWood().getID());
         }
         // else if (action.getType() == "Build") {
         //     return Action.createPrimitiveProduction(townhallId, peasantTemplateId);
