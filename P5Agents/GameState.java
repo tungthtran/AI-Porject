@@ -619,9 +619,12 @@ public class GameState implements Comparable<GameState> {
         @Override
         public GameState apply(GameState state) {
             GameState newState = new GameState(state);
+            Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)gameState.getActionsTillState().clone();
             for (StripsAction action : actions) {
                 newState = action.apply(newState);
             }
+            cloneActionsTillState.push(this);
+            newState.setActionsTillState(cloneActionsTillState);
             return newState;
         }
 
@@ -757,37 +760,68 @@ public class GameState implements Comparable<GameState> {
     public List<GameState> generateChildren() {
         // TODO: Implement me!
         List<GameState> children = new ArrayList<>();
+        List<ArrayList<StripsAction>> peasantsActions = new ArrayList<>();
+
         for(SimUnit peasant : getPeasants()) {
+            ArrayList<StripsAction> peasantActions = new ArrayList<>();
             StripsAction moveToWood = new MoveUnitFromBaseToWood(peasant.getID(), this);
             if (moveToWood.preconditionsMet(this)){
                 children.add(moveToWood.apply(this));
+                peasantActions.add(moveToWood);
             }
             StripsAction moveToMine = new MoveUnitFromBaseToMine(peasant.getID(), this);
             if (moveToMine.preconditionsMet(this)){
                 children.add(moveToMine.apply(this));
+                peasantActions.add(moveToMine);
             }
             StripsAction moveToBase = new MoveUnitToBase(peasant.getID(), this);
             if(moveToBase.preconditionsMet(this)){
                 children.add(moveToBase.apply(this));
+                peasantActions.add(moveToBase);
             }
             for(SimResource wood : woods) {
                 StripsAction harvestWood = new HarvestWood(peasant, wood);
                 if(harvestWood.preconditionsMet(this)) {
                     children.add(harvestWood.apply(this));
+                    peasantActions.add(harvestWood);
                 }
             }
             for(SimResource gold : golds) {
                 StripsAction harvestGold = new HarvestGold(peasant, gold);
                 if(harvestGold.preconditionsMet(this)) {
                     children.add(harvestGold.apply(this));
+                    peasantActions.add(harvestGold);
                 }
             }
             for(SimUnit townhall: townhalls) {
                 StripsAction deposit = new Deposit(peasant, townhall);
                 if (deposit.preconditionsMet(this)) {
                     children.add(deposit.apply(this));
+                    peasantActions.add(deposit);
                 }
             }
+            peasantsActions.add(peasantActions);
+        }
+        // generate joint action
+        ArrayList<ListIterator<StripsAction>> iterators = new ArrayList<>();
+        for (ArrayList<StripsAction> actions: peasantsActions){
+            iterators.add(actions.listIterator(0));
+        }
+        int i = 0;
+        while (true){
+            List<StripsAction> jointActions = new ArrayList<>();
+            for (int j = 0; j<iterators.size();j++) {
+                jointActions.add(peasantsActions.get(j).get(iterators.get(j).nextIndex()-1));
+            }
+            StripsAction jointAct = new JointAction(jointActions);
+            if (jointAct.preconditionsMet) children.add(jointAct.apply());
+            while(!iterators.get(i).hasNext() && i<iterators.size()){
+                iterators.set(i, peasantsActions.get(i).listIterator(0));
+                i++;
+            }
+            if(i>=iterators.size())break;
+            iterators.get(i).next();
+            i = 0;
         }
         return children;
     }
@@ -816,7 +850,7 @@ public class GameState implements Comparable<GameState> {
             distanceToClosestWood = Math.max(wood.getPosition().chebyshevDistance(townhall),distanceToClosestWood);
             if(peasant.isAdjacent(wood.getPosition()) && requiredWood > woodAmount) atWood = 1;
         }
-        return distanceToClosestGoldMine*(2*(requiredGold - goldAmount)/100 + atGold) + distanceToClosestWood*(2*(requiredWood - woodAmount)/100+atWood);
+        return (distanceToClosestGoldMine*(2*(requiredGold - goldAmount)/100 + atGold) + distanceToClosestWood*(2*(requiredWood - woodAmount)/100+atWood))/peasants.size();
     }
 
     /**
