@@ -1,6 +1,7 @@
 package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.*;
+import java.util.*;
 
 /**
  * A useful start of an interface representing strips actions. You may add new methods to this interface if needed, but
@@ -41,7 +42,9 @@ public interface StripsAction {
     public int getUnitId();
     public String getType();
     public SimUnit getPerformingUnit();
+    public List<SimUnit> getUnits();
     public SimUnit getTownhall();
     public SimResource getGold();
     public SimResource getWood();
+    public List<StripsAction> getActions();
 }

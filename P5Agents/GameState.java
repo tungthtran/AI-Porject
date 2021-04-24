@@ -1,9 +1,11 @@
 package edu.cwru.sepia.agent.planner;
-import edu.cwru.sepia.agent.planner.actions.*;
+
+import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
 import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
-
+import edu.cwru.sepia.environment.model.state.Unit;
+import edu.cwru.sepia.environment.model.state.UnitTemplate;
 
 import java.util.*;
 
@@ -132,7 +134,12 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
-
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
+            return null;
+        }
     }
     class MoveUnitFromBaseToWood implements StripsAction {
         private int unitID = peasants.get(0).getID();
@@ -204,6 +211,12 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return this.closestWood;
         }
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
+            return null;
+        }
     }
     class MoveUnitToBase implements StripsAction {
         private int unitID = peasants.get(0).getID();
@@ -265,6 +278,12 @@ public class GameState implements Comparable<GameState> {
             return null;
         }
         public SimResource getWood() {
+            return null;
+        }
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
             return null;
         }
     }
@@ -340,6 +359,12 @@ public class GameState implements Comparable<GameState> {
         public int getUnitId(){
             return this.unitID;
         }
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
+            return null;
+        }
     }
 
     class HarvestWood implements StripsAction{
@@ -411,6 +436,12 @@ public class GameState implements Comparable<GameState> {
         }
         public SimResource getWood() {
             return this.tree;
+        }
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
+            return null;
         }
     }
 
@@ -484,6 +515,12 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
+            return null;
+        }
     }
 
     class Build implements StripsAction {
@@ -550,15 +587,23 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+        public List<StripsAction> getActions() {
+            return null;
+        }
     }
 
     class JointAction implements StripsAction {
         List<StripsAction> actions;
         private double cost;
+        private String type;
 
         public JointAction(List<StripsAction> actions) {
             this.actions = actions;
             this.cost = actions.stream().mapToDouble(v -> v.getCost()).max();
+            this.type = "JointAction";
         }
 
         @Override
@@ -585,11 +630,14 @@ public class GameState implements Comparable<GameState> {
             return cost;
         }
 
+        public List<StripsAction> getActions() {
+            return this.actions;
+        }
         public int getUnitId() {
-            return -2;
+            return -1;
         }
         public String getType() {
-            return null;
+            return this.type;
         }
         public SimUnit getPerformingUnit() {
             return null;
