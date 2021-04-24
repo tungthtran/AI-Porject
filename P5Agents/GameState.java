@@ -4,8 +4,6 @@ import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
 import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
-import edu.cwru.sepia.environment.model.state.Unit;
-import edu.cwru.sepia.environment.model.state.UnitTemplate;
 
 import java.util.*;
 
@@ -134,9 +132,9 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }
@@ -211,9 +209,9 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return this.closestWood;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }
@@ -280,9 +278,9 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }
@@ -359,9 +357,9 @@ public class GameState implements Comparable<GameState> {
         public int getUnitId(){
             return this.unitID;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }
@@ -399,7 +397,7 @@ public class GameState implements Comparable<GameState> {
             woods.remove(tree);
             // if the gold mine still has gold left
             if(newTree.getAmountLeft() > 0) {
-                golds.add(newTree);
+                woods.add(newTree);
             }
 
             List<SimUnit> units = new ArrayList<>(newGameState.getPeasants());
@@ -437,9 +435,9 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return this.tree;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }
@@ -515,9 +513,9 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }
@@ -587,9 +585,9 @@ public class GameState implements Comparable<GameState> {
         public SimResource getWood() {
             return null;
         }
-        public List<SimUnit> getUnits() {
-            return null;
-        }
+//        public List<SimUnit> getUnits() {
+//            return null;
+//        }
         public List<StripsAction> getActions() {
             return null;
         }

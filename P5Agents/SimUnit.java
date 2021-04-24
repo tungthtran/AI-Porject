@@ -34,7 +34,7 @@ public class SimUnit {
             this.cargoType = null;
         }
         else {
-            throw IllegalStateException("Not valid unit type");
+            throw new IllegalStateException("Not valid unit type");
         }
     }
 
