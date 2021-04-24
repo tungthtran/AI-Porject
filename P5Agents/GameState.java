@@ -488,12 +488,10 @@ public class GameState implements Comparable<GameState> {
 
     class Build implements StripsAction {
         private SimUnit townhall;
-        private int templateID;
         private double cost = 0;
 
-        public Build(SimUnit townhall, int templateID) {
+        public Build(SimUnit townhall) {
             this.townhall = townhall;
-            this.templateID = templateID;
         }
         
         @Override
@@ -506,15 +504,28 @@ public class GameState implements Comparable<GameState> {
             GameState newGameState = new GameState(state);
             List<SimUnit> simUnits = new ArrayList<>(newGameState.getPeasants());
             newGameState.setGoldAmount(newGameState.getGoldAmount() - 400);
-            UnitTemplate unitTemplate = new UnitTemplate(templateID);
-            Unit newUnit = new Unit(unitTemplate, newGameState.getNewUnitID());
+            //UnitTemplate unitTemplate = new UnitTemplate(templateID);
+            //Unit newUnit = new Unit(unitTemplate, newGameState.getNewUnitID());
 
-            SimUnit peasant = new SimUnit(new Unit.UnitView(newUnit));
-            simUnits.add(peasant);
+            int newID = (int)(Math.random()*100);
+            boolean flag = true;
+            while (flag){
+                newID = (int)(Math.random()*100);
+                for (SimUnit peasant : simUnits){
+                    if(peasant.getID() == newID){
+                        flag = false;
+                        break;
+                    }
+                }
+                flag = !flag;
+            }
+            
+            SimUnit newUnit = new SimUnit(newID, townhall.getPosition().getAdjacentPositions().get(0), "peasant");
+            simUnits.add(newUnit);
             newGameState.setPeasants(simUnits);
             newGameState.setCost(state.getCost() + this.getCost());
             newGameState.getActionsTillState().push(this);
-            return newState;
+            return newGameState;
         }
 
         @Override
@@ -522,7 +533,7 @@ public class GameState implements Comparable<GameState> {
             return cost;
         }
         public int getUnitId() {
-            return templateID;
+            return -1;
         }
         public String getType() {
             return null;
@@ -543,12 +554,10 @@ public class GameState implements Comparable<GameState> {
 
     class JointAction implements StripsAction {
         List<StripsAction> actions;
-        List<SimUnit> performingUnits;
         private double cost;
 
-        public JointAction(List<StripsAction> actions, List<SimUnit> performingUnits, double cost) {
+        public JointAction(List<StripsAction> actions) {
             this.actions = actions;
-            this.performingUnits = performingUnits;
             this.cost = actions.stream().mapToDouble(v -> v.getCost()).max();
         }
 
@@ -566,7 +575,7 @@ public class GameState implements Comparable<GameState> {
         public GameState apply(GameState state) {
             GameState newState = new GameState(state);
             for (StripsAction action : actions) {
-                action.apply(newState);
+                newState = action.apply(newState);
             }
             return newState;
         }
@@ -574,6 +583,25 @@ public class GameState implements Comparable<GameState> {
         @Override
         public double getCost() {
             return cost;
+        }
+
+        public int getUnitId() {
+            return -2;
+        }
+        public String getType() {
+            return null;
+        }
+        public SimUnit getPerformingUnit() {
+            return null;
+        }
+        public SimUnit getTownhall() {
+            return null;
+        }
+        public SimResource getGold() {
+            return null;
+        }
+        public SimResource getWood() {
+            return null;
         }
 
     }

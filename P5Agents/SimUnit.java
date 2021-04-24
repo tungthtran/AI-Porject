@@ -24,6 +24,20 @@ public class SimUnit {
         this.name = unit.getTemplateView().getName();
     }
 
+    public SimUnit(int ID, Position position, String name) {
+        if (name.equals("peasant")) {
+            this.HP = 30;
+            this.ID = ID;
+            this.position = new Position(position);
+            this.name = "peasant";
+            this.cargoAmount = 0;
+            this.cargoType = null;
+        }
+        else {
+            throw IllegalStateException("Not valid unit type");
+        }
+    }
+
     /***
      * A copy of the simulated unit
      * @param unit
