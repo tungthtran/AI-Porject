@@ -136,25 +136,23 @@ public class PEAgent extends Agent {
      * these actions are stored in a mapping between the peasant unit ID executing the action and the action you created.
      *
      * @param action StripsAction
-     * @return SEPIA representation of same action
+     * @return map of peasant ID and SEPIA representation of the joint action
      */
     private Map<Integer,Action> createSepiaAction(StripsAction action) {
         Map<Integer, Action> actionMap = new HashMap<>();
+
         for (int i=0; i < action.getActions().size(); i++) {
+            //change to SEPIA representation of each StripsAction and put it to the map
             StripsAction eachAction = action.getActions().get(i);
             int peasantId = peasantIdMap.get(eachAction.getUnitId());
 
             if (action.getType().equals("Deposit")) {
-//            Position destinationPos = action.getTownhall().getPosition();
                 actionMap.put(peasantId, Action.createCompoundDeposit(peasantId, eachAction.getTownhall().getID()));
             }
             else if (action.getType().equals("HarvestGold")) {
-//            Position destinationPos = action.getGold().getPosition();
                 actionMap.put(peasantId, Action.createCompoundGather(peasantId, eachAction.getGold().getID()));
             }
             else if (action.getType().equals("HarvestWood")) {
-//            Position destinationPos = action.getWood().getPosition();
-//            return Action.createPrimitiveGather(peasantId, peasantPos.getDirection(destinationPos));
                 actionMap.put(peasantId, Action.createCompoundGather(peasantId, eachAction.getWood().getID()));
             }
             else if (action.getType().equals("BuildPeasant")) {
@@ -174,7 +172,7 @@ public class PEAgent extends Agent {
             }
         }
 
-        return null;
+        return actionMap;
     }
 
     @Override
