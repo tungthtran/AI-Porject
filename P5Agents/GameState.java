@@ -602,14 +602,14 @@ public class GameState implements Comparable<GameState> {
 
         public JointAction(List<StripsAction> actions) {
             this.actions = actions;
-            this.cost = actions.stream().mapToDouble(v -> v.getCost()).max();
+            this.cost = actions.stream().mapToDouble(v -> v.getCost()).max().orElse(actions.get(0).getCost());
             this.type = "JointAction";
         }
 
         @Override
         public boolean preconditionsMet(GameState state) {
             for (StripsAction action : actions) {
-                if (action.preconditionsMet() == false) {
+                if (action.preconditionsMet(state) == false) {
                     return false;
                 }
             }
@@ -619,7 +619,7 @@ public class GameState implements Comparable<GameState> {
         @Override
         public GameState apply(GameState state) {
             GameState newState = new GameState(state);
-            Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)gameState.getActionsTillState().clone();
+            Stack<StripsAction> cloneActionsTillState = (Stack<StripsAction>)state.getActionsTillState().clone();
             for (StripsAction action : actions) {
                 newState = action.apply(newState);
             }
@@ -762,43 +762,45 @@ public class GameState implements Comparable<GameState> {
         List<GameState> children = new ArrayList<>();
         List<ArrayList<StripsAction>> peasantsActions = new ArrayList<>();
         SimUnit townhall = townhalls.get(0);
-        StripsAction buildPeasant = Build(townhall);
-        if(buildPeasant.preconditionsMet()) children.add(buildPeasant.apply(this));
+        List<StripsAction> buildActions = (new ArrayList<>());
+        buildActions.add(new Build(townhall));
+        StripsAction buildPeasant = new JointAction(buildActions);
+        if(buildPeasant.preconditionsMet(this)) children.add(buildPeasant.apply((this)));
         for(SimUnit peasant : getPeasants()) {
             ArrayList<StripsAction> peasantActions = new ArrayList<>();
             StripsAction moveToWood = new MoveUnitFromBaseToWood(peasant.getID(), this);
             if (moveToWood.preconditionsMet(this)){
-                children.add(moveToWood.apply(this));
+                //children.add(moveToWood.apply(this));
                 peasantActions.add(moveToWood);
             }
             StripsAction moveToMine = new MoveUnitFromBaseToMine(peasant.getID(), this);
             if (moveToMine.preconditionsMet(this)){
-                children.add(moveToMine.apply(this));
+                //children.add(moveToMine.apply(this));
                 peasantActions.add(moveToMine);
             }
             StripsAction moveToBase = new MoveUnitToBase(peasant.getID(), this);
             if(moveToBase.preconditionsMet(this)){
-                children.add(moveToBase.apply(this));
+                //children.add(moveToBase.apply(this));
                 peasantActions.add(moveToBase);
             }
             for(SimResource wood : woods) {
                 StripsAction harvestWood = new HarvestWood(peasant, wood);
                 if(harvestWood.preconditionsMet(this)) {
-                    children.add(harvestWood.apply(this));
+                    //children.add(harvestWood.apply(this));
                     peasantActions.add(harvestWood);
                 }
             }
             for(SimResource gold : golds) {
                 StripsAction harvestGold = new HarvestGold(peasant, gold);
                 if(harvestGold.preconditionsMet(this)) {
-                    children.add(harvestGold.apply(this));
+                    //children.add(harvestGold.apply(this));
                     peasantActions.add(harvestGold);
                 }
             }
-            for(SimUnit townhall: townhalls) {
-                StripsAction deposit = new Deposit(peasant, townhall);
+            for(SimUnit newTownhall: townhalls) {
+                StripsAction deposit = new Deposit(peasant, newTownhall);
                 if (deposit.preconditionsMet(this)) {
-                    children.add(deposit.apply(this));
+                    //children.add(deposit.apply(this));
                     peasantActions.add(deposit);
                 }
             }
@@ -807,7 +809,7 @@ public class GameState implements Comparable<GameState> {
         // generate joint action
         ArrayList<ListIterator<StripsAction>> iterators = new ArrayList<>();
         for (ArrayList<StripsAction> actions: peasantsActions){
-            iterators.add(actions.listIterator(0));
+            iterators.add(actions.listIterator(1));
         }
         int i = 0;
         while (true){
@@ -816,9 +818,9 @@ public class GameState implements Comparable<GameState> {
                 jointActions.add(peasantsActions.get(j).get(iterators.get(j).nextIndex()-1));
             }
             StripsAction jointAct = new JointAction(jointActions);
-            if (jointAct.preconditionsMet) children.add(jointAct.apply(this));
-            while(!iterators.get(i).hasNext() && i<iterators.size()){
-                iterators.set(i, peasantsActions.get(i).listIterator(0));
+            if (jointAct.preconditionsMet(this)) children.add(jointAct.apply(this));
+            while(i<iterators.size() && !iterators.get(i).hasNext()){
+                iterators.set(i, peasantsActions.get(i).listIterator(1));
                 i++;
             }
             if(i>=iterators.size())break;
