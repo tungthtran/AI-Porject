@@ -761,7 +761,9 @@ public class GameState implements Comparable<GameState> {
         // TODO: Implement me!
         List<GameState> children = new ArrayList<>();
         List<ArrayList<StripsAction>> peasantsActions = new ArrayList<>();
-
+        SimUnit townhall = townhalls.get(0);
+        StripsAction buildPeasant = Build(townhall);
+        if(buildPeasant.preconditionsMet()) children.add(buildPeasant.apply(this));
         for(SimUnit peasant : getPeasants()) {
             ArrayList<StripsAction> peasantActions = new ArrayList<>();
             StripsAction moveToWood = new MoveUnitFromBaseToWood(peasant.getID(), this);
@@ -814,7 +816,7 @@ public class GameState implements Comparable<GameState> {
                 jointActions.add(peasantsActions.get(j).get(iterators.get(j).nextIndex()-1));
             }
             StripsAction jointAct = new JointAction(jointActions);
-            if (jointAct.preconditionsMet) children.add(jointAct.apply());
+            if (jointAct.preconditionsMet) children.add(jointAct.apply(this));
             while(!iterators.get(i).hasNext() && i<iterators.size()){
                 iterators.set(i, peasantsActions.get(i).listIterator(0));
                 i++;
