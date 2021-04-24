@@ -342,7 +342,7 @@ public class GameState implements Comparable<GameState> {
         }
     }
 
-    public class HarvestWood implements StripsAction{
+    class HarvestWood implements StripsAction{
         private int unitID = peasants.get(0).getID();
         private SimUnit performingUnit;
         private SimResource tree;
@@ -485,6 +485,62 @@ public class GameState implements Comparable<GameState> {
             return null;
         }
     }
+
+    class Build implements StripsAction {
+        private SimUnit townhall;
+        private int templateID;
+        private double cost = 0;
+
+        public Build(SimUnit townhall, int templateID) {
+            this.townhall = townhall;
+            this.templateID = templateID;
+        }
+        
+        @Override
+        public boolean preconditionsMet(GameState gameState) {
+            return gameState.getPeasants().size() < 3 && gameState.getGoldAmount() >= 400;
+        }
+
+        @Override
+        public GameState apply(GameState state) {
+            GameState newGameState = new GameState(state);
+            List<SimUnit> simUnits = new ArrayList<>(newGameState.getPeasants());
+            newGameState.setGoldAmount(newGameState.getGoldAmount() - 400);
+            UnitTemplate unitTemplate = new UnitTemplate(templateID);
+            Unit newUnit = new Unit(unitTemplate, newGameState.getNewUnitID());
+
+            SimUnit peasant = new SimUnit(new Unit.UnitView(newUnit));
+            simUnits.add(peasant);
+            newGameState.setPeasants(simUnits);
+            newGameState.setCost(state.getCost() + this.getCost());
+            newGameState.getActionsTillState().push(this);
+            return newState;
+        }
+
+        @Override
+        public double getCost() {
+            return cost;
+        }
+        public int getUnitId() {
+            return templateID;
+        }
+        public String getType() {
+            return null;
+        }
+        public SimUnit getPerformingUnit() {
+            return townhall;
+        }
+        public SimUnit getTownhall() {
+            return townhall;
+        }
+        public SimResource getGold() {
+            return null;
+        }
+        public SimResource getWood() {
+            return null;
+        }
+    }
+
 
     
     /**
