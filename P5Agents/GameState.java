@@ -541,6 +541,43 @@ public class GameState implements Comparable<GameState> {
         }
     }
 
+    class JointAction implements StripsAction {
+        List<StripsAction> actions;
+        List<SimUnit> performingUnits;
+        private double cost;
+
+        public JointAction(List<StripsAction> actions, List<SimUnit> performingUnits, double cost) {
+            this.actions = actions;
+            this.performingUnits = performingUnits;
+            this.cost = actions.stream().mapToDouble(v -> v.getCost()).max();
+        }
+
+        @Override
+        public boolean preconditionsMet(GameState state) {
+            for (StripsAction action : actions) {
+                if (action.preconditionsMet() == false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public GameState apply(GameState state) {
+            GameState newState = new GameState(state);
+            for (StripsAction action : actions) {
+                action.apply(newState);
+            }
+            return newState;
+        }
+
+        @Override
+        public double getCost() {
+            return cost;
+        }
+
+    }
+
 
     
     /**
