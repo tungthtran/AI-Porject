@@ -123,6 +123,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return performingUnit;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return townhall;
         }
@@ -200,6 +206,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return performingUnit;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return this.townhall;
         }
@@ -269,6 +281,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return performingUnit;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return this.townhall;
         }
@@ -345,6 +363,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return performingUnit;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return null;
         }
@@ -426,6 +450,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return performingUnit;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return null;
         }
@@ -504,6 +534,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return this.performingUnit;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return this.townhall;
         }
@@ -576,6 +612,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return townhall;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return townhall;
         }
@@ -643,6 +685,12 @@ public class GameState implements Comparable<GameState> {
         public SimUnit getPerformingUnit() {
             return null;
         }
+
+        @Override
+        public List<SimUnit> getUnits() {
+            return null;
+        }
+
         public SimUnit getTownhall() {
             return null;
         }
@@ -852,9 +900,20 @@ public class GameState implements Comparable<GameState> {
             distanceToClosestWood = Math.max(wood.getPosition().chebyshevDistance(townhall),distanceToClosestWood);
             if(peasant.isAdjacent(wood.getPosition()) && requiredWood > woodAmount) atWood = 1;
         }
-        return (distanceToClosestGoldMine*(2*(requiredGold - goldAmount)/100 + atGold) + distanceToClosestWood*(2*(requiredWood - woodAmount)/100+atWood))/peasants.size();
+        double result = (distanceToClosestGoldMine*(2*(requiredGold - goldAmount)/100 - atGold) + distanceToClosestWood*(2*(requiredWood - woodAmount)/100 - atWood))/peasants.size();
+        for(int i = peasants.size()+1; i<3; i++){
+            result = Math.min(result, (distanceToClosestGoldMine*(2*(requiredGold)/100 - atGold) + distanceToClosestWood*(2*(requiredWood - woodAmount)/100 - atWood))/i + buildPeasantsHeuristic(i,distanceToClosestGoldMine,atGold));
+        }
+        return result;
     }
-
+    public double buildPeasantsHeuristic(int target, int distanceToMine, double atGold){
+        if (target<=peasants.size()) return 0;
+        double result = ((2*Math.max(400-goldAmount, 0)/100-atGold)*distanceToMine)/peasants.size();
+        for(int i = peasants.size()+1;i<target;i++){
+            result +=  (2*4*distanceToMine)/i;
+        }
+        return result;
+    }
     /**
      *
      * Write the function that computes the current cost to get to this node. This is combined with your heuristic to
