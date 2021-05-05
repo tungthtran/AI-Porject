@@ -146,28 +146,28 @@ public class PEAgent extends Agent {
             StripsAction eachAction = action.getActions().get(i);
             int peasantId = peasantIdMap.get(eachAction.getUnitId());
 
-            if (action.getType().equals("Deposit")) {
+            if (eachAction.getType().equals("Deposit")) {
                 actionMap.put(peasantId, Action.createCompoundDeposit(peasantId, eachAction.getTownhall().getID()));
             }
-            else if (action.getType().equals("HarvestGold")) {
+            else if (eachAction.getType().equals("HarvestGold")) {
                 actionMap.put(peasantId, Action.createCompoundGather(peasantId, eachAction.getGold().getID()));
             }
-            else if (action.getType().equals("HarvestWood")) {
+            else if (eachAction.getType().equals("HarvestWood")) {
                 actionMap.put(peasantId, Action.createCompoundGather(peasantId, eachAction.getWood().getID()));
             }
-            else if (action.getType().equals("BuildPeasant")) {
+            else if (eachAction.getType().equals("BuildPeasant")) {
                 actionMap.put(peasantId, Action.createCompoundProduction(townhallId, peasantTemplateId));
             }
-            else if (action.getType().equals("MoveToGold")) {
-                Position destinationPos = action.getGold().getPosition();
+            else if (eachAction.getType().equals("MoveToGold")) {
+                Position destinationPos = eachAction.getGold().getPosition();
                 actionMap.put(peasantId, Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y));
             }
-            else if (action.getType().equals("MoveToWood")) {
-                Position destinationPos = action.getWood().getPosition();
+            else if (eachAction.getType().equals("MoveToWood")) {
+                Position destinationPos = eachAction.getWood().getPosition();
                 actionMap.put(peasantId, Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y));
             }
-            else if (action.getType().equals("MoveToBase")) {
-                Position destinationPos = action.getTownhall().getPosition();
+            else if (eachAction.getType().equals("MoveToBase")) {
+                Position destinationPos = eachAction.getTownhall().getPosition();
                 actionMap.put(peasantId, Action.createCompoundMove(peasantId, destinationPos.x, destinationPos.y));
             }
         }
