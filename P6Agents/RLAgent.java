@@ -250,7 +250,18 @@ public class RLAgent extends Agent {
      * @return The current reward
      */
     public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        return 0;
+        double reward = -0.1;
+		int lastTurnNumber = stateView.getTurnNumber() - 1;
+
+		for(DamageLog damageLog : historyView.getDamageLogs(lastTurnNumber)) {
+			if(damageLog.getAttackerController() == playernum && damageLog.getAttackerID() == footmanId){
+				reward = reward + damageLog.getDamage();
+			} else if(damageLog.getAttackerController() == ENEMY_PLAYERNUM && damageLog.getDefenderID() == footmanId){
+				reward = reward - damageLog.getDamage();
+			}
+		}
+
+		return reward;
     }
 
     /**
