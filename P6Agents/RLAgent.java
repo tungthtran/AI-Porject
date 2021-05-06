@@ -12,6 +12,7 @@ import edu.cwru.sepia.environment.model.state.Unit;
 
 import java.io.*;
 import java.util.*;
+import java.util.Random;
 
 public class RLAgent extends Agent {
 
@@ -213,7 +214,19 @@ public class RLAgent extends Agent {
      * @return The enemy footman ID this unit should attack
      */
     public int selectAction(State.StateView stateView, History.HistoryView historyView, int attackerId) {
-        return -1;
+        if (random.nextDouble() < epsilon){
+            return enemyFootmen.get(random.nextInt(enemyFootmen.size())).intValue();
+        }else{
+            int target = enemyFootmen.get(0);
+            int maxQ = calcQValue(stateView, historyView, attackerID, target);
+            for(Integer enemy : enemyFootmen){
+                if (calcQValue(stateView, historyView, attackerID, enemy.intValue()) > maxQ){
+                    target = enemy.intValue();
+                    maxQ = calcQValue(stateView, historyView, attackerID, target);
+                }
+            }
+            return target;
+        }
     }
 
     /**
@@ -282,7 +295,12 @@ public class RLAgent extends Agent {
                              History.HistoryView historyView,
                              int attackerId,
                              int defenderId) {
-        return 0;
+        double result = 0;
+        double[] features = calculateFeatureVector(stateView, historyView, attackerID, defenderId);
+        for (int i = 0; i < NUM_FEATURES; i++){
+            result += weights[i]*features[i];
+        }
+        return result;
     }
 
     /**
