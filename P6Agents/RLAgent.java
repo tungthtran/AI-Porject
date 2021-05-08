@@ -63,6 +63,7 @@ public class RLAgent extends Agent {
 
     //map each footmanID to the length of its action
     Map<Integer, Integer> actionLengths = new HashMap<>();
+    Map<Integer, ArrayList<Integer>> featuresVectors = new HashMap<>();
 
     public RLAgent(int playernum, String[] args) {
         super(playernum);
@@ -189,8 +190,32 @@ public class RLAgent extends Agent {
                 int actionlength = 0;
                 // for(ActionResult result : actionResults.values()) {
                     if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)){
+                        double reward = calculateReward(stateView, historyView, footmanId, actionLengths);
+                        double[] oldweight = objectsToPrimitivesDouble(weights);
+                        double[] oldFeatures = featuresVectors.get(footmanId).stream().mapToDouble(i->i).toArray();
+                        double oldQ = 0 , newQ = 0;
+                        double[] newweight = updateWeights(
+                                oldweight, 
+                                oldFeatures,
+                                reward,
+                                stateView,
+                                historyView,
+                                footmanId);
+                        weights = primitivesToObjectsDouble(newWeights);
+                        for(int i = 0; i<NUM_FEATURES;i++){
+                            oldQ += oldFeatures[i]*oldWeights[i];
+                            newQ += oldFeatures[i]*weights[i];
+                        }
+                        if (Math.abs(newQ-oldQ)<0.01){
+                            terminalStep(stateView, HistoryView);
+                            return null;
+                        } 
                         int enemyId = selectAction(stateView, historyView, footmanId);
-                        Action action = Action.createCompoundAttack(attackerID, enemyID);
+                        Action action = Action.createCompoundAttack(footmanId, enemyId);
+                        double[] features = calculateFeatureVector(stateView, historyView, footmanId, enemyId);
+                        ArrayList<Integer> vector = new ArrayList<>();
+                        vector.addAll(objectsToPrimitivesDouble(features));
+                        featuresVectors.put(footmanId, vector)
                         result.put(footmanId, action);
                         actionLengths.put(footmanId, 0);
                     }
@@ -203,19 +228,13 @@ public class RLAgent extends Agent {
             }
             else {
                 int enemyId = selectAction(stateView, historyView, footmanId);
-                Action action = Action.createCompoundAttack(attackerID, enemyID);
+                Action action = Action.createCompoundAttack(footmanId, enemyId);
+                double[] features = calculateFeatureVector(stateView, historyView, footmanId, enemyId);
+                ArrayList<Integer> vector = new ArrayList<>();
+                vector.addAll(objectsToPrimitivesDouble(features));
+                featuresVectors.put(footmanId, vector);
                 result.put(footmanId, action);
             }
-            double reward = calculateReward(stateView, historyView, footmanId);
-            double[] oldweight = objectToPrimitiveDouble(weights);
-            double[] newweight = updateWeights(
-                                oldweight, 
-                                calculateFeatureVector(previousStateView, historyView, footmanId, enemyId),
-                                reward,
-                                stateView,
-                                historyView,
-                                footmanId);
-            weights = primitiveToObjectDouble(newweight);
         }
         return result;
     }
@@ -232,7 +251,7 @@ public class RLAgent extends Agent {
         }
     }
 
-    public Double[] primitiveToObjectDouble(double[] array){
+    public Double[] primitivesToObjectsDouble(double[] array){
         Double[] result = new Double[array.length];
         for(int i = 0; i < array.length; i++){
             result[i] = array[i];
@@ -240,7 +259,7 @@ public class RLAgent extends Agent {
         return result;
     }
 
-    public double[] objectToPrimitiveDouble(Double[] array){
+    public double[] objectsToPrimitiveDoubles(Double[] array){
         double[] result = new double[array.length];
         for(int i = 0; i < array.length; i++){
             result[i] = array[i];
