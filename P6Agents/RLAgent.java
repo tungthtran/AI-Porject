@@ -194,7 +194,7 @@ public class RLAgent extends Agent {
                         Action action = Action.createCompoundAttack(attackerID, enemyID);
                         result.put(footmanId, action);
                     }
-                    else if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)) {
+                    else if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.INCOMPLETE)) {
                         actionlength++;
                     }
                 }
