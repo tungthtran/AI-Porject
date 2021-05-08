@@ -172,8 +172,34 @@ public class RLAgent extends Agent {
      */
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
-        return null;
+        Map<Integer, Action> result = new HashMap<>();
+        int lastTurnNumber = stateView.getTurnNumber() - 1;
+        if (lastTurnNumber >= 0) {
+            checkLastTurn(stateView, historyView, lastTurnNumber);
+        }
+        if
+        for (Integer footmanId : myFootmen) {
+            if(footmanId)
+            int enemyId = selectAction(stateView, historyView, footmanId);
+
+            Action action = Action.createCompoundAttack(attackerID, enemyID);
+            result.put(footmanId, action);
+        }
+        return result;
     }
+
+    public void checkLastTurn(State.StateView stateView, History.HistoryView historyView,int lastTurnNumber) {
+        for(DeathLog deathLog : historyView.getDeathLogs(stateView.getTurnNumber() -1)) {
+            //System.out.println("Player: " + deathLog.getController() + " unit: " + deathLog.getDeadUnitID());
+            if (deathLog.getController() == ENEMY_PLAYERNUM) {
+                enemyFootmen.remove(deathLog.getDeadUnitID());
+            }
+            else if (deathLog.getController() == playernum) {
+                myFootmen.remove(deathLog.getDeadUnitID());
+            }
+        }
+    }
+
 
     /**
      *
@@ -275,8 +301,14 @@ public class RLAgent extends Agent {
 				reward = reward - damageLog.getDamage();
 			}
 		}
-
-		return reward;
+        for(DeathLog deathLog : historyView.getDeathLogs(previousTurnNumber)){
+            if(deathLog.getController() == ENEMY_PLAYERNUM){
+                reward = reward + 100;
+            } else if(deathLog.getDeadUnitID() == footmanId) {
+                reward = reward - 100;
+            }
+        }
+        return reward;
     }
 
     /**
