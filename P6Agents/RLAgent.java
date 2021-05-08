@@ -61,6 +61,9 @@ public class RLAgent extends Agent {
     public final double learningRate = .0001;
     public final double epsilon = .02;
 
+    //map each footmanID to the length of its action
+    Map<Integer, Integer> actionLengths = new HashMap<>();
+
     public RLAgent(int playernum, String[] args) {
         super(playernum);
 
@@ -173,7 +176,7 @@ public class RLAgent extends Agent {
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
         Map<Integer, Action> result = new HashMap<>();
-        Map<Integer, Integer> actionLengths = new HashMap<>();
+        
         int lastTurnNumber = stateView.getTurnNumber() - 1;
         if (lastTurnNumber >= 0) {
             checkLastTurn(stateView, historyView, lastTurnNumber);
@@ -322,11 +325,11 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, int actionLength) {
+    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, Map<Integer, Integer> actionLengths) {
         double reward = 0;
         double discountReward = 1;
         //calculate cost of the actions
-        for(int i = 0; i<actionLength; i++){
+        for(int i = 0; i<actionLengths.get(footmanId); i++){
             reward += -0.1*discountReward;
             discountReward *= gamma;
         }
