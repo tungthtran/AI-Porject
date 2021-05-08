@@ -430,6 +430,7 @@ public class RLAgent extends Agent {
                 features[2] = 0.0;
             }
             // how many others are attacking this enemy
+            features[3] = 0.0;
             for (int i = 1; i < stateView.getTurnNumber(); i++) {
                 Map<Integer, ActionResult> actions = historyView.getCommandFeedback(playernum, i);
                 for (int attacker : actions.keySet()) {
