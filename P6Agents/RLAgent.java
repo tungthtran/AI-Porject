@@ -302,22 +302,28 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        double reward = -0.1;
+    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, int actionLength) {
+        double reward = 0;
+        double discountReward = 1;
+        //calculate cost of the actions
+        for(int i = 0; i<actionLength; i++){
+            reward += -0.1*discountReward;
+            discountReward *= gamma;
+        }
 		int lastTurnNumber = stateView.getTurnNumber() - 1;
 
 		for(DamageLog damageLog : historyView.getDamageLogs(lastTurnNumber)) {
 			if(damageLog.getAttackerController() == playernum && damageLog.getAttackerID() == footmanId){
-				reward = reward + damageLog.getDamage();
+				reward = reward + damageLog.getDamage()*discountReward;
 			} else if(damageLog.getAttackerController() == ENEMY_PLAYERNUM && damageLog.getDefenderID() == footmanId){
-				reward = reward - damageLog.getDamage();
+				reward = reward - damageLog.getDamage()*discountReward;
 			}
 		}
         for(DeathLog deathLog : historyView.getDeathLogs(previousTurnNumber)){
             if(deathLog.getController() == ENEMY_PLAYERNUM){
-                reward = reward + 100;
+                reward = reward + 100*discountReward;
             } else if(deathLog.getDeadUnitID() == footmanId) {
-                reward = reward - 100;
+                reward = reward - 100*discountReward;
             }
         }
         return reward;
