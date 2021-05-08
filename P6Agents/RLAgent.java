@@ -184,7 +184,7 @@ public class RLAgent extends Agent {
 
         for (Integer footmanId : myFootmen) {
             if (lastTurnNumber >= 0) {
-                checkLastTurn(stateView, historyView, lastTurnNumber);
+                // checkLastTurn(stateView, historyView, lastTurnNumber);
                 Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, lastTurnNumber);
                 int actionlength = 0;
                 for(ActionResult result : actionResults.values()) {
@@ -193,12 +193,14 @@ public class RLAgent extends Agent {
 
                         Action action = Action.createCompoundAttack(attackerID, enemyID);
                         result.put(footmanId, action);
+                        actionLengths.put(footmanId, 0);
                     }
                     else if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.INCOMPLETE)) {
-                        actionlength++;
+                        int length = actionLengths.get(footmanId).intValue() + 1;
+                        actionLengths.replace(footmanId, new Integer(length));
                     }
                 }
-                actionLengths.put(footmanId, actionlength);
+
             }
             else {
                 int enemyId = selectAction(stateView, historyView, footmanId);
