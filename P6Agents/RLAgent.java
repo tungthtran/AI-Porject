@@ -173,17 +173,37 @@ public class RLAgent extends Agent {
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
         Map<Integer, Action> result = new HashMap<>();
+        Map<Integer, Integer> actionLengths = new HashMap<>();
         int lastTurnNumber = stateView.getTurnNumber() - 1;
         if (lastTurnNumber >= 0) {
             checkLastTurn(stateView, historyView, lastTurnNumber);
         }
-        if
-        for (Integer footmanId : myFootmen) {
-            if(footmanId)
-            int enemyId = selectAction(stateView, historyView, footmanId);
 
-            Action action = Action.createCompoundAttack(attackerID, enemyID);
-            result.put(footmanId, action);
+        for (Integer footmanId : myFootmen) {
+            if (lastTurnNumber >= 0) {
+                checkLastTurn(stateView, historyView, lastTurnNumber);
+                Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, lastTurnNumber);
+                int actionlength = 0;
+                for(ActionResult result : actionResults.values()) {
+                    if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)){
+                        int enemyId = selectAction(stateView, historyView, footmanId);
+
+                        Action action = Action.createCompoundAttack(attackerID, enemyID);
+                        result.put(footmanId, action);
+                    }
+                    else if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)) {
+                        actionlength++;
+                    }
+                }
+                actionLengths.put(footmanId, actionlength);
+            }
+            else {
+                int enemyId = selectAction(stateView, historyView, footmanId);
+
+                Action action = Action.createCompoundAttack(attackerID, enemyID);
+                result.put(footmanId, action);
+            }
+            
         }
         return result;
     }
