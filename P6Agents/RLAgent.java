@@ -298,7 +298,7 @@ public class RLAgent extends Agent {
     public double[] updateWeights(double[] oldWeights, double[] oldFeatures, double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId) {
         double estNextQ = calcQValue(stateView, historyView, footmanId, enemyFootmen.get(0).intValue());
         for(Integer enemy : enemyFootmen){
-            estNextQ = max(estNextQ, calcQValue, footmanId, enemy.intValue());
+            estNextQ = max(estNextQ, calcQValue(stateView, historyView, footmanId, enemy.intValue()));
         }
         double oldQ = 0;
         for(int i = 0; i<NUM_FEATURES; i++){
