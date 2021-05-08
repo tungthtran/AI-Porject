@@ -22,12 +22,17 @@ public class RLAgent extends Agent {
      * and call sys.exit(0)
      */
     public final int numEpisodes;
+    private final int currentEpisodes = 0;
+    private final int totalEpisodes = 0;
 
+
+    private double cumulativeReward = 0.0;
     /**
      * List of your footmen and your enemies footmen
      */
     private List<Integer> myFootmen;
     private List<Integer> enemyFootmen;
+    public Map<Integer, Double> footmenRewards;
 
     /**
      * Convenience variable specifying enemy agent number. Use this whenever referring
@@ -39,6 +44,7 @@ public class RLAgent extends Agent {
      * Set this to whatever size your feature vector is.
      */
     public static final int NUM_FEATURES = 5;
+
 
     /** Use this random number generator for your epsilon exploration. When you submit we will
      * change this seed so make sure that your agent works for more than the default seed.
@@ -64,6 +70,8 @@ public class RLAgent extends Agent {
     //map each footmanID to the length of its action
     Map<Integer, Integer> actionLengths = new HashMap<>();
     Map<Integer, ArrayList<Integer>> featuresVectors = new HashMap<>();
+    List<Double> averageRewards = new ArrayList<>();
+    boolean inEvaluation = true;
 
     public RLAgent(int playernum, String[] args) {
         super(playernum);
@@ -128,6 +136,8 @@ public class RLAgent extends Agent {
             }
         }
 
+        footmenRewards = new HashMap<Integer, Double>();
+
         return middleStep(stateView, historyView);
     }
 
@@ -177,13 +187,14 @@ public class RLAgent extends Agent {
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
         Map<Integer, Action> result = new HashMap<>();
+        updateFootmenRewards(stateView, historyView);
         
         int lastTurnNumber = stateView.getTurnNumber() - 1;
         if (lastTurnNumber >= 0) {
             checkLastTurn(stateView, historyView, lastTurnNumber);
         }
 
-        for (Integer footmanId : myFootmen) {
+        for (Integer footmanId : myFootmen) { 
             if (lastTurnNumber >= 0) {
                 // checkLastTurn(stateView, historyView, lastTurnNumber);
                 Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, lastTurnNumber);
@@ -206,10 +217,10 @@ public class RLAgent extends Agent {
                             oldQ += oldFeatures[i]*oldWeights[i];
                             newQ += oldFeatures[i]*newWeights[i];
                         }
-                        if (Math.abs(newQ-oldQ)<0.01){
-                            terminalStep(stateView, HistoryView);
-                            return null;
-                        } 
+                        // if (Math.abs(newQ-oldQ)<0.01){
+                        //     terminalStep(stateView, HistoryView);
+                        //     return null;
+                        // } 
                         int enemyId = selectAction(stateView, historyView, footmanId);
                         Action action = Action.createCompoundAttack(footmanId, enemyId);
                         double[] features = calculateFeatureVector(stateView, historyView, footmanId, enemyId);
@@ -251,6 +262,15 @@ public class RLAgent extends Agent {
         }
     }
 
+    private void updateFootmenRewards(State.StateView stateView, History.HistoryView historyView) {
+                
+        for (Integer footmanId : myFootmen) {
+            double stateReward = calculateReward(stateView, historyView, footmanId);
+            double currentTotalReward = footmenRewards.get(footmanId); 
+            footmenRewards.put(footmanId, currentTotalReward + stateReward);         
+        }
+    }
+
     public Double[] primitivesToObjectsDouble(double[] array){
         Double[] result = new Double[array.length];
         for(int i = 0; i < array.length; i++){
@@ -277,12 +297,47 @@ public class RLAgent extends Agent {
      */
     @Override
     public void terminalStep(State.StateView stateView, History.HistoryView historyView) {
-
         // MAKE SURE YOU CALL printTestData after you finish a test episode.
+        updateFootmenRewards(stateView, historyView);
+        checkLastTurn(stateView, historyView, stateView.getTurnNumber() - 1);
 
+        if (!inEvaluation && completedLearningEpisodes < 10) {
+            currentEpisodes++;
+            totalEpisodes++;
+        }
+
+        else if (!inEvaluation) {
+            inEvaluation = true;
+            currentEpisodes = 0;
+        }
+
+        if (inEvaluation && currentEpisodes < 5) {
+            currentEpisodes++;         
+            
+            // Update cumulative reward.
+            double sum = 0.0;
+            for (Double reward : footmenRewards.values()) {
+                sum += reward;
+            }
+            cumulativeReward += (sum /= footmenRewards.size());
+        }
+        // Switch to learning if we've tested for 5 episodes.
+        else if (inEvaluation) {
+            inEvaluation = false;
+            currentEpisodes = 0;
+            
+            // Print test results after each testing phase is completed.
+            averageCumulativeRewards.add(cumulativeReward / 5);
+            printTestData(averageCumulativeRewards);
+            cumulativeReward = 0.0;
+        }
+        
         // Save your weights
         saveWeights(weights);
-
+        
+        if(totalEpisodes > numEpisodes){
+            sys.exit(0);
+        }
     }
 
     /**
@@ -371,13 +426,16 @@ public class RLAgent extends Agent {
      */
     public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, Map<Integer, Integer> actionLengths) {
         double reward = 0;
+        int lastTurnNumber = stateView.getTurnNumber() - 1;
+        if (lastTurnNumber) return reward; 
+
         double discountReward = 1;
         //calculate cost of the actions
         for(int i = 0; i<actionLengths.get(footmanId); i++){
             reward += -0.1*discountReward;
             discountReward *= gamma;
         }
-		int lastTurnNumber = stateView.getTurnNumber() - 1;
+		
 
 		for(DamageLog damageLog : historyView.getDamageLogs(lastTurnNumber)) {
 			if(damageLog.getAttackerController() == playernum && damageLog.getAttackerID() == footmanId){
