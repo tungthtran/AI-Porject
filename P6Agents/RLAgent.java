@@ -207,7 +207,7 @@ public class RLAgent extends Agent {
                             double[] oldweight = objectsToPrimitivesDouble(weights);
                             double[] oldFeatures = featuresVectors.get(footmanId).stream().mapToDouble(i->i).toArray();
                             double oldQ = 0 , newQ = 0;
-                            double[] newweight = updateWeights(
+                            double[] newWeights = updateWeights(
                                     oldweight, 
                                     oldFeatures,
                                     reward,
