@@ -45,7 +45,7 @@ public class RLAgent extends Agent {
      */
     public final Random random = new Random(12345);
 
-    public static final double CONSTANT = 22.0;
+    public static final double CONSTANT = 2.2;
 
     /**
      * Your Q-function weights.
@@ -343,9 +343,9 @@ public class RLAgent extends Agent {
                                            int attackerId,
                                            int defenderId) {
         // features include:
-        // HP of the enemy
-        // whether the enemy hit us
-        // how many others attack that enemy
+        // HP of the enemy because we want to fight the enemy with low HP
+        // whether the enemy is attacking us
+        // how many others are attacking that enemy
         // the distance between us and the enemy
         UnitView attackingUnit = stateView.getUnit(attackerId);
         UnitView defendingUnit = stateView.getUnit(defenderId);
@@ -355,15 +355,26 @@ public class RLAgent extends Agent {
         else {
             double[] features = new double[NUM_FEATURES];
             features[0] = CONSTANT;
+            HP of the enemy
             features[1] = defendingUnit.getHP();
             Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
-            if (actionResults.get(defenderId).getAction().getTargetId() == attackerId) {
+            // if the enemy is attacking me --> save 1
+            // otherwise 0
+            if (actionResults.containsKey(defenderId) && (TargetedAction)(actionResults.get(defenderId).getAction()).getTargetId() == attackerId) {
                 features[2] = 1.0;
             }
             else {
                 features[2] = 0.0;
             }
-            features[3] = 0.0;
+            // how many others are attacking this enemy
+            for (int i = 1; i < stateView.getTurnNumber(); i++) {
+                Map<Integer, ActionResult> actions = historyView.getCommandFeedback(playernum, i);
+                for (int attacker : actions.keySet()) {
+                    if ((TargetedAction)(actions.get(attacker).getAction()).getTargetId() == defenderId) {
+                        features[3]++;
+                    }
+                }
+            }
             features[4] = chebyshevDistance(attackingUnit.getXPosition(), attackingUnit.getYPosition(), 
                                             defendingUnit.getXPosition(), defendingUnit.getYPosition());
         }
