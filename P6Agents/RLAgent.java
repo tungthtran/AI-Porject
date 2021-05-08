@@ -172,8 +172,34 @@ public class RLAgent extends Agent {
      */
     @Override
     public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
-        return null;
+        Map<Integer, Action> result = new HashMap<>();
+        int lastTurnNumber = stateView.getTurnNumber() - 1;
+        if (lastTurnNumber >= 0) {
+            checkLastTurn(stateView, historyView, lastTurnNumber);
+        }
+        if
+        for (Integer footmanId : myFootmen) {
+            if(footmanId)
+            int enemyId = selectAction(stateView, historyView, footmanId);
+
+            Action action = Action.createCompoundAttack(attackerID, enemyID);
+            result.put(footmanId, action);
+        }
+        return result;
     }
+
+    public void checkLastTurn(State.StateView stateView, History.HistoryView historyView,int lastTurnNumber) {
+        for(DeathLog deathLog : historyView.getDeathLogs(stateView.getTurnNumber() -1)) {
+            //System.out.println("Player: " + deathLog.getController() + " unit: " + deathLog.getDeadUnitID());
+            if (deathLog.getController() == ENEMY_PLAYERNUM) {
+                enemyFootmen.remove(deathLog.getDeadUnitID());
+            }
+            else if (deathLog.getController() == playernum) {
+                myFootmen.remove(deathLog.getDeadUnitID());
+            }
+        }
+    }
+
 
     /**
      *
@@ -276,19 +302,31 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        double reward = -0.1;
+    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, int actionLength) {
+        double reward = 0;
+        double discountReward = 1;
+        //calculate cost of the actions
+        for(int i = 0; i<actionLength; i++){
+            reward += -0.1*discountReward;
+            discountReward *= gamma;
+        }
 		int lastTurnNumber = stateView.getTurnNumber() - 1;
 
 		for(DamageLog damageLog : historyView.getDamageLogs(lastTurnNumber)) {
 			if(damageLog.getAttackerController() == playernum && damageLog.getAttackerID() == footmanId){
-				reward = reward + damageLog.getDamage();
+				reward = reward + damageLog.getDamage()*discountReward;
 			} else if(damageLog.getAttackerController() == ENEMY_PLAYERNUM && damageLog.getDefenderID() == footmanId){
-				reward = reward - damageLog.getDamage();
+				reward = reward - damageLog.getDamage()*discountReward;
 			}
 		}
-
-		return reward;
+        for(DeathLog deathLog : historyView.getDeathLogs(previousTurnNumber)){
+            if(deathLog.getController() == ENEMY_PLAYERNUM){
+                reward = reward + 100*discountReward;
+            } else if(deathLog.getDeadUnitID() == footmanId) {
+                reward = reward - 100*discountReward;
+            }
+        }
+        return reward;
     }
 
     /**
