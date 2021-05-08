@@ -45,7 +45,7 @@ public class RLAgent extends Agent {
      */
     public final Random random = new Random(12345);
 
-    public static final double CONSTANT = 22.0;
+    public static final double CONSTANT = 2.2;
 
     /**
      * Your Q-function weights.
@@ -322,22 +322,28 @@ public class RLAgent extends Agent {
      * @param footmanId The footman ID you are looking for the reward from.
      * @return The current reward
      */
-    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        double reward = -0.1;
+    public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, int actionLength) {
+        double reward = 0;
+        double discountReward = 1;
+        //calculate cost of the actions
+        for(int i = 0; i<actionLength; i++){
+            reward += -0.1*discountReward;
+            discountReward *= gamma;
+        }
 		int lastTurnNumber = stateView.getTurnNumber() - 1;
 
 		for(DamageLog damageLog : historyView.getDamageLogs(lastTurnNumber)) {
 			if(damageLog.getAttackerController() == playernum && damageLog.getAttackerID() == footmanId){
-				reward = reward + damageLog.getDamage();
+				reward = reward + damageLog.getDamage()*discountReward;
 			} else if(damageLog.getAttackerController() == ENEMY_PLAYERNUM && damageLog.getDefenderID() == footmanId){
-				reward = reward - damageLog.getDamage();
+				reward = reward - damageLog.getDamage()*discountReward;
 			}
 		}
         for(DeathLog deathLog : historyView.getDeathLogs(previousTurnNumber)){
             if(deathLog.getController() == ENEMY_PLAYERNUM){
-                reward = reward + 100;
+                reward = reward + 100*discountReward;
             } else if(deathLog.getDeadUnitID() == footmanId) {
-                reward = reward - 100;
+                reward = reward - 100*discountReward;
             }
         }
         return reward;
@@ -395,9 +401,9 @@ public class RLAgent extends Agent {
                                            int attackerId,
                                            int defenderId) {
         // features include:
-        // HP of the enemy
-        // whether the enemy hit us
-        // how many others attack that enemy
+        // HP of the enemy because we want to fight the enemy with low HP
+        // whether the enemy is attacking us
+        // how many others are attacking that enemy
         // the distance between us and the enemy
         UnitView attackingUnit = stateView.getUnit(attackerId);
         UnitView defendingUnit = stateView.getUnit(defenderId);
@@ -407,15 +413,26 @@ public class RLAgent extends Agent {
         else {
             double[] features = new double[NUM_FEATURES];
             features[0] = CONSTANT;
+            HP of the enemy
             features[1] = defendingUnit.getHP();
             Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
-            if (actionResults.get(defenderId).getAction().getTargetId() == attackerId) {
+            // if the enemy is attacking me --> save 1
+            // otherwise 0
+            if (actionResults.containsKey(defenderId) && (TargetedAction)(actionResults.get(defenderId).getAction()).getTargetId() == attackerId) {
                 features[2] = 1.0;
             }
             else {
                 features[2] = 0.0;
             }
-            features[3] = 0.0;
+            // how many others are attacking this enemy
+            for (int i = 1; i < stateView.getTurnNumber(); i++) {
+                Map<Integer, ActionResult> actions = historyView.getCommandFeedback(playernum, i);
+                for (int attacker : actions.keySet()) {
+                    if ((TargetedAction)(actions.get(attacker).getAction()).getTargetId() == defenderId) {
+                        features[3]++;
+                    }
+                }
+            }
             features[4] = chebyshevDistance(attackingUnit.getXPosition(), attackingUnit.getYPosition(), 
                                             defendingUnit.getXPosition(), defendingUnit.getYPosition());
         }
