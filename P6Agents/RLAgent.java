@@ -201,7 +201,19 @@ public class RLAgent extends Agent {
      * @return The updated weight vector.
      */
     public double[] updateWeights(double[] oldWeights, double[] oldFeatures, double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId) {
-        return null;
+        double estNextQ = calcQValue(stateView, historyView, footmanId, enemyFootmen.get(0).intValue());
+        for(Integer enemy : enemyFootmen){
+            estNextQ = max(estNextQ, calcQValue, footmanId, enemy.intValue());
+        }
+        double oldQ = 0;
+        for(int i = 0; i<NUM_FEATURES; i++){
+            oldQ += oldWeights[i]*oldFeatures[i];
+        }
+        double[] newWeights = new double[NUM_FEATURES];
+        for(int i = 0; i< NUM_FEATURES; i++){
+            newWeights[i] = oldWeights[i] + learningRate*(totalReward + gamma*estNextQ-oldQ)*oldFeatures[i];
+        }
+        return newWeights;
     }
 
     /**
