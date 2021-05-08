@@ -201,22 +201,25 @@ public class RLAgent extends Agent {
                 int actionlength = 0;
                 // for(ActionResult result : actionResults.values()) {
                     if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)){
-                        double reward = calculateReward(stateView, historyView, footmanId, actionLengths);
-                        double[] oldweight = objectsToPrimitivesDouble(weights);
-                        double[] oldFeatures = featuresVectors.get(footmanId).stream().mapToDouble(i->i).toArray();
-                        double oldQ = 0 , newQ = 0;
-                        double[] newweight = updateWeights(
-                                oldweight, 
-                                oldFeatures,
-                                reward,
-                                stateView,
-                                historyView,
-                                footmanId);
-                        weights = primitivesToObjectsDouble(newWeights);
-                        for(int i = 0; i<NUM_FEATURES;i++){
-                            oldQ += oldFeatures[i]*oldWeights[i];
-                            newQ += oldFeatures[i]*newWeights[i];
+                        if (!inEvaluation) {
+                            double reward = calculateReward(stateView, historyView, footmanId, actionLengths);
+                            double[] oldweight = objectsToPrimitivesDouble(weights);
+                            double[] oldFeatures = featuresVectors.get(footmanId).stream().mapToDouble(i->i).toArray();
+                            double oldQ = 0 , newQ = 0;
+                            double[] newweight = updateWeights(
+                                    oldweight, 
+                                    oldFeatures,
+                                    reward,
+                                    stateView,
+                                    historyView,
+                                    footmanId);
+                            weights = primitivesToObjectsDouble(newWeights);
                         }
+                        
+                        // for(int i = 0; i<NUM_FEATURES;i++){
+                        //     oldQ += oldFeatures[i]*oldWeights[i];
+                        //     newQ += oldFeatures[i]*newWeights[i];
+                        // }
                         // if (Math.abs(newQ-oldQ)<0.01){
                         //     terminalStep(stateView, HistoryView);
                         //     return null;
@@ -226,6 +229,7 @@ public class RLAgent extends Agent {
                         double[] features = calculateFeatureVector(stateView, historyView, footmanId, enemyId);
                         ArrayList<Integer> vector = new ArrayList<>();
                         vector.addAll(objectsToPrimitivesDouble(features));
+
                         featuresVectors.put(footmanId, vector)
                         result.put(footmanId, action);
                         actionLengths.put(footmanId, 0);
