@@ -45,6 +45,8 @@ public class RLAgent extends Agent {
      */
     public final Random random = new Random(12345);
 
+    public static final double CONSTANT = 22.0;
+
     /**
      * Your Q-function weights.
      */
@@ -340,7 +342,35 @@ public class RLAgent extends Agent {
                                            History.HistoryView historyView,
                                            int attackerId,
                                            int defenderId) {
-        return null;
+        // features include:
+        // HP of the enemy
+        // whether the enemy hit us
+        // how many others attack that enemy
+        // the distance between us and the enemy
+        UnitView attackingUnit = stateView.getUnit(attackerId);
+        UnitView defendingUnit = stateView.getUnit(defenderId);
+        if (footman == null || enemy == null) {
+            return null;
+        }
+        else {
+            double[] features = new double[NUM_FEATURES];
+            features[0] = CONSTANT;
+            features[1] = defendingUnit.getHP();
+            Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
+            if (actionResults.get(defenderId).getAction().getTargetId() == attackerId) {
+                features[2] = 1.0;
+            }
+            else {
+                features[2] = 0.0;
+            }
+            features[3] = 0.0;
+            features[4] = chebyshevDistance(attackingUnit.getXPosition(), attackingUnit.getYPosition(), 
+                                            defendingUnit.getXPosition(), defendingUnit.getYPosition());
+        }
+    }
+
+    public int chebyshevDistance(int x1, int y1, int x2, int y2) {
+        return Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2));
     }
 
     /**
