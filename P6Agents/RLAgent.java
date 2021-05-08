@@ -460,12 +460,12 @@ public class RLAgent extends Agent {
         else {
             double[] features = new double[NUM_FEATURES];
             features[0] = CONSTANT;
-            HP of the enemy
+            //HP of the enemy
             features[1] = defendingUnit.getHP();
             Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
             // if the enemy is attacking me --> save 1
             // otherwise 0
-            if (actionResults.containsKey(defenderId) && (TargetedAction)(actionResults.get(defenderId).getAction()).getTargetId() == attackerId) {
+            if (actionResults.containsKey(defenderId) && ((TargetedAction)(actionResults.get(defenderId).getAction())).getTargetId() == attackerId) {
                 features[2] = 1.0;
             }
             else {
@@ -473,14 +473,12 @@ public class RLAgent extends Agent {
             }
             // how many others are attacking this enemy
             features[3] = 0.0;
-            for (int i = 1; i < stateView.getTurnNumber(); i++) {
-                Map<Integer, ActionResult> actions = historyView.getCommandFeedback(playernum, i);
-                for (int attacker : actions.keySet()) {
-                    if ((TargetedAction)(actions.get(attacker).getAction()).getTargetId() == defenderId) {
-                        features[3]++;
-                    }
+            for (Integer performingId : actionResults.keySet()) {
+                if (((TargetedAction)actionResults.get(performingId).getAction()).getTargetId() == defenderId) {
+                    features[3]++;
                 }
             }
+            // distance
             features[4] = chebyshevDistance(attackingUnit.getXPosition(), attackingUnit.getYPosition(), 
                                             defendingUnit.getXPosition(), defendingUnit.getYPosition());
         }
