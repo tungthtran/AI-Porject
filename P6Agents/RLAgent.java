@@ -187,10 +187,9 @@ public class RLAgent extends Agent {
                 // checkLastTurn(stateView, historyView, lastTurnNumber);
                 Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, lastTurnNumber);
                 int actionlength = 0;
-                for(ActionResult result : actionResults.values()) {
+                // for(ActionResult result : actionResults.values()) {
                     if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)){
                         int enemyId = selectAction(stateView, historyView, footmanId);
-
                         Action action = Action.createCompoundAttack(attackerID, enemyID);
                         result.put(footmanId, action);
                         actionLengths.put(footmanId, 0);
@@ -199,16 +198,24 @@ public class RLAgent extends Agent {
                         int length = actionLengths.get(footmanId).intValue() + 1;
                         actionLengths.replace(footmanId, new Integer(length));
                     }
-                }
+                // }
 
             }
             else {
                 int enemyId = selectAction(stateView, historyView, footmanId);
-
                 Action action = Action.createCompoundAttack(attackerID, enemyID);
                 result.put(footmanId, action);
             }
-            
+            double reward = calculateReward(stateView, historyView, footmanId);
+            double[] oldweight = objectToPrimitiveDouble(weights);
+            double[] newweight = updateWeights(
+                                oldweight, 
+                                calculateFeatureVector(previousStateView, historyView, footmanId, enemyId),
+                                reward,
+                                stateView,
+                                historyView,
+                                footmanId);
+            weights = primitiveToObjectDouble(newweight);
         }
         return result;
     }
@@ -223,6 +230,22 @@ public class RLAgent extends Agent {
                 myFootmen.remove(deathLog.getDeadUnitID());
             }
         }
+    }
+
+    public Double[] primitiveToObjectDouble(double[] array){
+        Double[] result = new Double[array.length];
+        for(int i = 0; i < array.length; i++){
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    public double[] objectToPrimitiveDouble(Double[] array){
+        double[] result = new double[array.length];
+        for(int i = 0; i < array.length; i++){
+            result[i] = array[i];
+        }
+        return result;
     }
 
 
