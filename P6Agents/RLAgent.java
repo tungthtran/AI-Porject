@@ -204,7 +204,7 @@ public class RLAgent extends Agent {
                         weights = primitivesToObjectsDouble(newWeights);
                         for(int i = 0; i<NUM_FEATURES;i++){
                             oldQ += oldFeatures[i]*oldWeights[i];
-                            newQ += oldFeatures[i]*weights[i];
+                            newQ += oldFeatures[i]*newWeights[i];
                         }
                         if (Math.abs(newQ-oldQ)<0.01){
                             terminalStep(stateView, HistoryView);
