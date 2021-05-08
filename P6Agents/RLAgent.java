@@ -22,8 +22,9 @@ public class RLAgent extends Agent {
      * and call sys.exit(0)
      */
     public final int numEpisodes;
-    private final int currentEpisodes = 0;
-    private final int totalEpisodes = 0;
+    private int currentEpisodes = 0;
+    private int totalEpisodes = 0;
+    private List<Double> averageCumulativeRewards = new ArrayList<>();
 
 
     private double cumulativeReward = 0.0;
@@ -69,7 +70,7 @@ public class RLAgent extends Agent {
 
     //map each footmanID to the length of its action
     Map<Integer, Integer> actionLengths = new HashMap<>();
-    Map<Integer, ArrayList<Integer>> featuresVectors = new HashMap<>();
+    Map<Integer, ArrayList<Double>> featuresVectors = new HashMap<>();
     List<Double> averageRewards = new ArrayList<>();
     boolean inEvaluation = true;
 
@@ -202,11 +203,11 @@ public class RLAgent extends Agent {
                 // for(ActionResult result : actionResults.values()) {
                     if (actionResults.get(footmanId).getFeedback().equals(ActionFeedback.COMPLETED)){
                         double reward = calculateReward(stateView, historyView, footmanId, actionLengths);
-                        double[] oldweight = objectsToPrimitivesDouble(weights);
+                        double[] oldWeights = objectsToPrimitivesDouble(weights);
                         double[] oldFeatures = featuresVectors.get(footmanId).stream().mapToDouble(i->i).toArray();
                         double oldQ = 0 , newQ = 0;
-                        double[] newweight = updateWeights(
-                                oldweight, 
+                        double[] newWeights = updateWeights(
+                                oldWeights,
                                 oldFeatures,
                                 reward,
                                 stateView,
@@ -224,9 +225,9 @@ public class RLAgent extends Agent {
                         int enemyId = selectAction(stateView, historyView, footmanId);
                         Action action = Action.createCompoundAttack(footmanId, enemyId);
                         double[] features = calculateFeatureVector(stateView, historyView, footmanId, enemyId);
-                        ArrayList<Integer> vector = new ArrayList<>();
-                        vector.addAll(objectsToPrimitivesDouble(features));
-                        featuresVectors.put(footmanId, vector)
+                        ArrayList<Double> vector = new ArrayList<>();
+                        vector.addAll(Arrays.asList(primitivesToObjectsDouble(features)));
+                        featuresVectors.put(footmanId, vector);
                         result.put(footmanId, action);
                         actionLengths.put(footmanId, 0);
                     }
@@ -241,8 +242,8 @@ public class RLAgent extends Agent {
                 int enemyId = selectAction(stateView, historyView, footmanId);
                 Action action = Action.createCompoundAttack(footmanId, enemyId);
                 double[] features = calculateFeatureVector(stateView, historyView, footmanId, enemyId);
-                ArrayList<Integer> vector = new ArrayList<>();
-                vector.addAll(objectsToPrimitivesDouble(features));
+                ArrayList<Double> vector = new ArrayList<>();
+                vector.addAll(Arrays.asList(primitivesToObjectsDouble(features)));
                 featuresVectors.put(footmanId, vector);
                 result.put(footmanId, action);
             }
@@ -265,7 +266,7 @@ public class RLAgent extends Agent {
     private void updateFootmenRewards(State.StateView stateView, History.HistoryView historyView) {
                 
         for (Integer footmanId : myFootmen) {
-            double stateReward = calculateReward(stateView, historyView, footmanId);
+            double stateReward = calculateReward(stateView, historyView, footmanId, actionLengths);
             double currentTotalReward = footmenRewards.get(footmanId); 
             footmenRewards.put(footmanId, currentTotalReward + stateReward);         
         }
@@ -279,7 +280,7 @@ public class RLAgent extends Agent {
         return result;
     }
 
-    public double[] objectsToPrimitiveDoubles(Double[] array){
+    public double[] objectsToPrimitivesDouble(Double[] array){
         double[] result = new double[array.length];
         for(int i = 0; i < array.length; i++){
             result[i] = array[i];
@@ -301,7 +302,7 @@ public class RLAgent extends Agent {
         updateFootmenRewards(stateView, historyView);
         checkLastTurn(stateView, historyView, stateView.getTurnNumber() - 1);
 
-        if (!inEvaluation && completedLearningEpisodes < 10) {
+        if (!inEvaluation && currentEpisodes < 10) {
             currentEpisodes++;
             totalEpisodes++;
         }
@@ -336,7 +337,7 @@ public class RLAgent extends Agent {
         saveWeights(weights);
         
         if(totalEpisodes > numEpisodes){
-            sys.exit(0);
+            System.exit(0);
         }
     }
 
@@ -353,7 +354,7 @@ public class RLAgent extends Agent {
     public double[] updateWeights(double[] oldWeights, double[] oldFeatures, double totalReward, State.StateView stateView, History.HistoryView historyView, int footmanId) {
         double estNextQ = calcQValue(stateView, historyView, footmanId, enemyFootmen.get(0).intValue());
         for(Integer enemy : enemyFootmen){
-            estNextQ = max(estNextQ, calcQValue(stateView, historyView, footmanId, enemy.intValue()));
+            estNextQ = Math.max(estNextQ, calcQValue(stateView, historyView, footmanId, enemy.intValue()));
         }
         double oldQ = 0;
         for(int i = 0; i<NUM_FEATURES; i++){
@@ -380,11 +381,11 @@ public class RLAgent extends Agent {
             return enemyFootmen.get(random.nextInt(enemyFootmen.size())).intValue();
         }else{
             int target = enemyFootmen.get(0);
-            int maxQ = calcQValue(stateView, historyView, attackerID, target);
+            double maxQ = calcQValue(stateView, historyView, attackerId, target);
             for(Integer enemy : enemyFootmen){
-                if (calcQValue(stateView, historyView, attackerID, enemy.intValue()) > maxQ){
+                if (calcQValue(stateView, historyView, attackerId, enemy.intValue()) > maxQ){
                     target = enemy.intValue();
-                    maxQ = calcQValue(stateView, historyView, attackerID, target);
+                    maxQ = calcQValue(stateView, historyView, attackerId, target);
                 }
             }
             return target;
@@ -427,7 +428,7 @@ public class RLAgent extends Agent {
     public double calculateReward(State.StateView stateView, History.HistoryView historyView, int footmanId, Map<Integer, Integer> actionLengths) {
         double reward = 0;
         int lastTurnNumber = stateView.getTurnNumber() - 1;
-        if (lastTurnNumber) return reward; 
+        if (lastTurnNumber<0) return reward;
 
         double discountReward = 1;
         //calculate cost of the actions
@@ -444,7 +445,7 @@ public class RLAgent extends Agent {
 				reward = reward - damageLog.getDamage()*discountReward;
 			}
 		}
-        for(DeathLog deathLog : historyView.getDeathLogs(previousTurnNumber)){
+        for(DeathLog deathLog : historyView.getDeathLogs(lastTurnNumber)){
             if(deathLog.getController() == ENEMY_PLAYERNUM){
                 reward = reward + 100*discountReward;
             } else if(deathLog.getDeadUnitID() == footmanId) {
@@ -473,7 +474,7 @@ public class RLAgent extends Agent {
                              int attackerId,
                              int defenderId) {
         double result = 0;
-        double[] features = calculateFeatureVector(stateView, historyView, attackerID, defenderId);
+        double[] features = calculateFeatureVector(stateView, historyView, attackerId, defenderId);
         for (int i = 0; i < NUM_FEATURES; i++){
             result += weights[i]*features[i];
         }
@@ -510,9 +511,9 @@ public class RLAgent extends Agent {
         // whether the enemy is attacking us
         // how many others are attacking that enemy
         // the distance between us and the enemy
-        UnitView attackingUnit = stateView.getUnit(attackerId);
-        UnitView defendingUnit = stateView.getUnit(defenderId);
-        if (footman == null || enemy == null) {
+        Unit.UnitView attackingUnit = stateView.getUnit(attackerId);
+        Unit.UnitView defendingUnit = stateView.getUnit(defenderId);
+        if (attackingUnit == null || defendingUnit == null) {
             return null;
         }
         else {
@@ -523,22 +524,22 @@ public class RLAgent extends Agent {
             Map<Integer, ActionResult> actionResults = historyView.getCommandFeedback(playernum, stateView.getTurnNumber() - 1);
             // if the enemy is attacking me --> save 1
             // otherwise 0
-            if (actionResults.containsKey(defenderId) && ((TargetedAction)(actionResults.get(defenderId).getAction())).getTargetId() == attackerId) {
+            if (actionResults.containsKey(defenderId) && ((TargetedAction) (actionResults.get(defenderId).getAction())).getTargetId() == attackerId) {
                 features[2] = 1.0;
-            }
-            else {
+            } else {
                 features[2] = 0.0;
             }
             // how many others are attacking this enemy
             features[3] = 0.0;
             for (Integer performingId : actionResults.keySet()) {
-                if (((TargetedAction)actionResults.get(performingId).getAction()).getTargetId() == defenderId) {
+                if (((TargetedAction) actionResults.get(performingId).getAction()).getTargetId() == defenderId) {
                     features[3]++;
                 }
             }
             // distance
-            features[4] = chebyshevDistance(attackingUnit.getXPosition(), attackingUnit.getYPosition(), 
-                                            defendingUnit.getXPosition(), defendingUnit.getYPosition());
+            features[4] = chebyshevDistance(attackingUnit.getXPosition(), attackingUnit.getYPosition(),
+                    defendingUnit.getXPosition(), defendingUnit.getYPosition());
+            return features;
         }
     }
 
